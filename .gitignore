@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+vendor/bundle/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Rails
+apps/api/log/*.log
+apps/api/tmp/
+apps/api/storage/
+apps/api/public/assets
+apps/api/public/packs
+apps/api/.bundle
+apps/api/vendor/bundle
+
+# Coverage
+apps/api/coverage/
+apps/mobile/coverage/
+
+# Test artifacts
+apps/api/spec/examples.txt
+
+# Build
+apps/api/public/uploads
+*.dump
+
+# React Native / Expo
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+apps/mobile/*.jks
+apps/mobile/*.p8
+apps/mobile/*.p12
+apps/mobile/*.key
+apps/mobile/*.mobileprovision
+apps/mobile/*.orig.*
+apps/mobile/android/
+apps/mobile/ios/
+
+# Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Local
+*.local
+
+# Secrets
+*.pem
+*.key
+credentials.yml.enc
+master.key
+
+# Docker
+.docker/
+
+# Task files (local)
+tasks/

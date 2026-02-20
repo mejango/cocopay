@@ -1,0 +1,64 @@
+source "https://rubygems.org"
+
+ruby "3.2.3"
+
+# Rails
+gem "rails", "~> 8.0.1"
+
+# Database
+gem "pg", "~> 1.5"
+
+# Redis
+gem "redis", "~> 5.0"
+
+# Web server
+gem "puma", ">= 5.0"
+
+# Authentication
+gem "bcrypt", "~> 3.1"
+gem "jwt", "~> 2.7"
+
+# Blockchain
+gem "eth", "~> 0.5"
+gem "faraday", "~> 2.7"
+
+# Background jobs
+gem "solid_queue", "~> 1.0"
+# gem "mission_control-jobs", "~> 0.3"  # Requires asset pipeline, disabled for API-only mode
+
+# ActionCable uses redis gem directly
+
+# JSON
+gem "jbuilder", "~> 2.11"
+
+# CORS
+gem "rack-cors", "~> 2.0"
+
+# Boot speed
+gem "bootsnap", require: false
+
+# Timezone data for Windows
+gem "tzinfo-data", platforms: %i[windows jruby]
+
+group :development, :test do
+  gem "debug", platforms: %i[mri windows], require: "debug/prelude"
+  gem "brakeman", require: false
+  gem "rubocop-rails-omakase", require: false
+
+  # Testing
+  gem "rspec-rails", "~> 7.0"
+  gem "factory_bot_rails", "~> 6.4"
+  gem "faker", "~> 3.2"
+end
+
+group :development do
+  gem "letter_opener", "~> 1.8"
+end
+
+group :test do
+  gem "shoulda-matchers", "~> 6.0"
+  gem "webmock", "~> 3.19"
+  gem "vcr", "~> 6.2"
+  gem "simplecov", require: false
+  gem "database_cleaner-active_record", "~> 2.1"
+end
