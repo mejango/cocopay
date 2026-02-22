@@ -58,6 +58,42 @@ export const CHAINS = {
     ],
     blockExplorer: 'https://arbiscan.io',
   },
+  ethereumSepolia: {
+    id: 11155111,
+    name: 'Ethereum Sepolia',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: [
+      'https://ethereum-sepolia.publicnode.com',
+    ],
+    blockExplorer: 'https://sepolia.etherscan.io',
+  },
+  optimismSepolia: {
+    id: 11155420,
+    name: 'OP Sepolia',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: [
+      'https://optimism-sepolia.publicnode.com',
+    ],
+    blockExplorer: 'https://sepolia-optimism.etherscan.io',
+  },
+  baseSepolia: {
+    id: 84532,
+    name: 'Base Sepolia',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: [
+      'https://base-sepolia.publicnode.com',
+    ],
+    blockExplorer: 'https://sepolia.basescan.org',
+  },
+  arbitrumSepolia: {
+    id: 421614,
+    name: 'Arbitrum Sepolia',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: [
+      'https://arbitrum-sepolia.publicnode.com',
+    ],
+    blockExplorer: 'https://sepolia.arbiscan.io',
+  },
 } as const;
 
 export type ChainId = typeof CHAINS[keyof typeof CHAINS]['id'];

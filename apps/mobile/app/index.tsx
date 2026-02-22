@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, Image } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useAccount, useEnsName } from 'wagmi';
 import { useBalanceStore } from '../src/stores/balance';
 import { useAuthStore } from '../src/stores/auth';
+import { useAuthPopoverStore } from '../src/stores/authPopover';
 import { colors, typography, spacing, borderRadius, shadows } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 import { cycleLanguage, LANGUAGE_LABELS, type Language } from '../src/i18n';
@@ -23,14 +25,24 @@ function formatUsdValue(value: number): string {
 export default function BalancesScreen() {
   const { t, i18n } = useTranslation();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { totalUsd, revnets, isLoading, error, fetch: fetchRevnets } = useBalanceStore();
+  const openAuthPopover = useAuthPopoverStore((state) => state.open);
+  const setAuthStep = useAuthPopoverStore((state) => state.setStep);
+  const { address: walletAddress, isConnected: isWalletConnected } = useAccount();
+  const { data: ensName } = useEnsName({ address: walletAddress });
+  const connectRef = useRef<View>(null);
+
+  const walletLabel = ensName
+    || (walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : '');
+  const { totalUsd, revnets, isLoading, error, fetch: fetchRevnets, setWalletAddress } = useBalanceStore();
   const [refreshing, setRefreshing] = useState(false);
   const [langLabel, setLangLabel] = useState(LANGUAGE_LABELS[i18n.language as Language] || 'PT');
 
   useEffect(() => {
-    // Always fetch revnets on mount (no auth required for viewing balance)
+    if (walletAddress) {
+      setWalletAddress(walletAddress);
+    }
     fetchRevnets();
-  }, [fetchRevnets]);
+  }, [walletAddress, setWalletAddress, fetchRevnets]);
 
   // Revnets already sorted by cash out value from the service
 
@@ -83,7 +95,7 @@ export default function BalancesScreen() {
     chainId: 0,
     name: t('home.digitalDollars'),
     tokenSymbol: 'USDC',
-    logoUri: 'https://assets.coingecko.com/coins/images/6319/small/usdc.png',
+    logoUri: 'https://assets.coingecko.com/coins/images/6319/large/usdc.png',
     balance: '0',
     balanceFormatted: '0',
     treasuryBalance: '0',
@@ -104,13 +116,11 @@ export default function BalancesScreen() {
       <View style={styles.container}>
         {/* Total Balance */}
         <View style={styles.totalCard}>
-          <Pressable onPress={handleWalletPress}>
-            <View style={styles.labelRow}>
-              <Text style={styles.coconutEmoji}>🥥</Text>
-              <Text style={styles.totalLabel}>{t('home.yourBalance')}</Text>
-            </View>
-            <Text style={styles.totalAmount}>{formatUsdValue(totalCashOutUsd)}</Text>
-          </Pressable>
+          <View style={styles.labelRow}>
+            <Text style={styles.coconutEmoji}>🥥</Text>
+            <Text style={styles.totalLabel}>{t('home.yourBalance')}</Text>
+          </View>
+          <Text style={styles.totalAmount}>{formatUsdValue(totalCashOutUsd)}</Text>
         </View>
 
         {/* Revnets List */}
@@ -188,12 +198,47 @@ export default function BalancesScreen() {
         {/* Bottom Dock */}
         <View style={styles.payButtonContainer}>
           <View style={styles.dockLeft}>
-            {!isAuthenticated && (
+            {!isAuthenticated && !isWalletConnected && (
               <Pressable
+                ref={connectRef}
                 style={styles.signInButton}
-                onPress={() => router.push('/auth')}
+                onPress={() => {
+                  connectRef.current?.measureInWindow((x, y, w, h) => {
+                    openAuthPopover({ x, y, width: w, height: h });
+                  });
+                }}
               >
                 <Text style={styles.signInText}>{t('auth.connect')}</Text>
+              </Pressable>
+            )}
+            {!isAuthenticated && isWalletConnected && (
+              <Pressable
+                ref={connectRef}
+                style={styles.connectedStatus}
+                onPress={() => {
+                  connectRef.current?.measureInWindow((x, y, w, h) => {
+                    openAuthPopover({ x, y, width: w, height: h });
+                    setAuthStep('wallet');
+                  });
+                }}
+              >
+                <Text style={styles.hollowCircle}>○</Text>
+                <Text style={styles.connectedText}>{walletLabel}</Text>
+              </Pressable>
+            )}
+            {isAuthenticated && isWalletConnected && (
+              <Pressable
+                ref={connectRef}
+                style={styles.connectedStatus}
+                onPress={() => {
+                  connectRef.current?.measureInWindow((x, y, w, h) => {
+                    openAuthPopover({ x, y, width: w, height: h });
+                    setAuthStep('connected');
+                  });
+                }}
+              >
+                <Text style={styles.greenCircle}>●</Text>
+                <Text style={styles.connectedText}>{walletLabel}</Text>
               </Pressable>
             )}
 
@@ -375,6 +420,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing[4],
     paddingBottom: spacing[8],
+    minHeight: 101,
     borderTopWidth: 1,
     borderTopColor: colors.whiteAlpha10,
   },
@@ -396,6 +442,27 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily,
     fontSize: typography.sizes.sm,
     color: colors.gray500,
+  },
+  connectedStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    minHeight: 52,
+  },
+  hollowCircle: {
+    fontSize: 14,
+    color: colors.gray400,
+  },
+  greenCircle: {
+    fontSize: 14,
+    color: colors.success,
+  },
+  connectedText: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.xs,
+    color: colors.gray400,
   },
   langButton: {
     paddingVertical: spacing[2],

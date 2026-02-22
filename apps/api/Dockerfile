@@ -37,26 +37,7 @@ RUN bundle install
 # Copy application code
 COPY . .
 
-# Production stage
-FROM base AS production
-
-ENV RAILS_ENV="production"
-
-# Copy built artifacts
-COPY --from=build /app /app
-COPY --from=build /usr/local/bundle /usr/local/bundle
-
-# Run and own files as a non-root user
-RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails /app
-
-USER rails:rails
-
-EXPOSE 3000
-CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
-
-# Development stage (default)
+# Development stage
 FROM base AS development
 
 # Install build tools for gem compilation
@@ -79,6 +60,25 @@ COPY . .
 
 # Create directory structure
 RUN mkdir -p tmp/pids tmp/cache log storage
+
+EXPOSE 3000
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
+
+# Production stage (last — Railway builds this by default)
+FROM base AS production
+
+ENV RAILS_ENV="production"
+
+# Copy built artifacts
+COPY --from=build /app /app
+COPY --from=build /usr/local/bundle /usr/local/bundle
+
+# Run and own files as a non-root user
+RUN groupadd --system --gid 1000 rails && \
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    chown -R rails:rails /app
+
+USER rails:rails
 
 EXPOSE 3000
 CMD ["./bin/rails", "server", "-b", "0.0.0.0"]

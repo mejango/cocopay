@@ -95,6 +95,100 @@ RSpec.describe "API V1 Auth", type: :request do
     end
   end
 
+  describe "POST /api/v1/auth/wallet/nonce" do
+    let(:address) { "0x" + "a1b2c3d4e5" * 4 }
+
+    it "returns a nonce" do
+      post "/api/v1/auth/wallet/nonce",
+           params: { address: address }.to_json,
+           headers: json_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(json_response[:data][:nonce]).to be_present
+    end
+
+    it "returns 422 without address" do
+      post "/api/v1/auth/wallet/nonce",
+           params: {}.to_json,
+           headers: json_headers
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
+
+  describe "POST /api/v1/auth/wallet/siwe" do
+    let(:address) { "0x" + "a1b2c3d4e5" * 4 }
+
+    context "with valid signature" do
+      before do
+        allow(SiweService).to receive(:verify).and_return({ address: address.downcase })
+      end
+
+      it "returns JWT and user for new wallet" do
+        post "/api/v1/auth/wallet/siwe",
+             params: { address: address, message: "test message", signature: "0xsig" }.to_json,
+             headers: json_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response[:data][:token]).to be_present
+        expect(json_response[:data][:user][:wallet_address]).to eq(address.downcase)
+      end
+
+      it "creates a new user for unknown wallet" do
+        expect {
+          post "/api/v1/auth/wallet/siwe",
+               params: { address: address, message: "test message", signature: "0xsig" }.to_json,
+               headers: json_headers
+        }.to change(User, :count).by(1)
+      end
+
+      it "finds existing wallet user" do
+        create(:wallet_user, wallet_address: address.downcase)
+
+        expect {
+          post "/api/v1/auth/wallet/siwe",
+               params: { address: address, message: "test message", signature: "0xsig" }.to_json,
+               headers: json_headers
+        }.not_to change(User, :count)
+      end
+
+      it "creates session with wallet auth method" do
+        expect {
+          post "/api/v1/auth/wallet/siwe",
+               params: { address: address, message: "test message", signature: "0xsig" }.to_json,
+               headers: json_headers
+        }.to change(Session, :count).by(1)
+
+        session = Session.last
+        expect(session.auth_method).to eq("wallet")
+      end
+    end
+
+    context "with invalid signature" do
+      before do
+        allow(SiweService).to receive(:verify).and_return(nil)
+      end
+
+      it "returns 401" do
+        post "/api/v1/auth/wallet/siwe",
+             params: { address: address, message: "test message", signature: "0xbadsig" }.to_json,
+             headers: json_headers
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context "with missing params" do
+      it "returns 422" do
+        post "/api/v1/auth/wallet/siwe",
+             params: { address: address }.to_json,
+             headers: json_headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
   describe "DELETE /api/v1/auth/session" do
     let(:user) { create(:user) }
 

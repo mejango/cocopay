@@ -23,6 +23,24 @@ export default {
     errorSendFailed: '发送链接失败',
     checkEmailTitle: '查看您的邮箱',
     checkEmailMessage: '我们已向您发送了一个魔法链接以登录。',
+    chooseMethod: '选择连接账户的方式。',
+    email: '邮箱',
+    wallet: '钱包',
+    enterEmail: '输入您的邮箱以接收登录代码。',
+    sendCode: '发送代码',
+    walletSubtitle: '连接您的钱包以登录。',
+    walletConnect: '连接钱包',
+    walletConnectedAs: '已连接',
+    walletSignHint: '签名以保存。',
+    walletSign: '签名',
+    walletDisconnect: '断开连接',
+    connectedSignedIn: '已登录',
+    walletSignIn: '签名消息',
+    walletFetchingNonce: '连接中...',
+    walletSigning: '请在钱包中签名...',
+    walletVerifying: '验证中...',
+    walletVerifyFailed: '钱包验证失败',
+    back: '‹ 返回',
   },
   // Verify screen
   verify: {
@@ -100,6 +118,7 @@ export default {
     comingSoonTitle: '即将推出',
     comingSoonDeposit: '通过 {{chain}} 充值 USDC 即将推出！',
     comingSoonWithdraw: '提现功能即将推出！',
+    signInToDeposit: '登录以充值您的账户',
   },
   // Profile screen
   profile: {
@@ -142,6 +161,15 @@ export default {
     errorEmptyName: '请输入商店名称',
     comingSoonTitle: '即将推出',
     comingSoonMessage: '商店创建功能即将推出！',
+    deploying: '正在部署到所有链...',
+    deployComplete: '继续',
+    chainPending: '等待中',
+    chainSubmitted: '创建中...',
+    chainConfirmed: '完成',
+    chainFailed: '失败',
+    chainSlow: '缓慢',
+    doNotClose: '部署期间请勿关闭此应用',
+    viewExplorer: '查看',
   },
   // Store detail screen
   store: {

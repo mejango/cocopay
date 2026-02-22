@@ -1,8 +1,10 @@
 import { View, Text, StyleSheet, Pressable, TextInput, Alert, Platform, useWindowDimensions, Image } from 'react-native';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useBalanceStore } from '../src/stores/balance';
+import { useAuthStore } from '../src/stores/auth';
+import { useAuthPopoverStore } from '../src/stores/authPopover';
 import { colors, typography, spacing, shadows } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 
@@ -10,10 +12,14 @@ const CHAINS = ['Arbitrum', 'Optimism', 'Ethereum', 'Base'];
 const USDC_LOGO = 'https://assets.coingecko.com/coins/images/6319/small/usdc.png';
 
 export default function WalletScreen() {
-  const { totalUsd, walletAddress } = useBalanceStore();
+  const { totalUsd } = useBalanceStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const walletAddress = user?.deposit_address || '';
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
+  const signInRef = useRef<View>(null);
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [amount, setAmount] = useState('');
   const [withdrawAddress, setWithdrawAddress] = useState('');
@@ -125,25 +131,42 @@ export default function WalletScreen() {
         <View style={styles.content}>
 
           {activeTab === 'deposit' ? (
-            /* Deposit: show address to receive USDC */
-            <View style={styles.depositSection}>
-              <Text style={styles.depositLabel}>{t('wallet.sendUsdcTo')}</Text>
-              <Pressable onPress={handleCopyAddress} style={styles.addressDisplay}>
-                <Text style={styles.addressText}>
-                  {addressChunks.map((chunk, i) => (
-                    <Text key={i} style={{ color: ADDRESS_COLORS[i % ADDRESS_COLORS.length] }}>
-                      {chunk}
-                    </Text>
-                  ))}
+            /* Deposit: show address to receive USDC (requires auth) */
+            !isAuthenticated ? (
+              <View style={styles.depositSection}>
+                <Text style={styles.depositLabel}>{t('wallet.signInToDeposit')}</Text>
+                <Pressable
+                  ref={signInRef}
+                  style={({ pressed }) => [styles.signInButton, pressed && styles.actionButtonPressed]}
+                  onPress={() => {
+                    signInRef.current?.measureInWindow((x, y, w, h) => {
+                      useAuthPopoverStore.getState().open({ x, y, width: w, height: h });
+                    });
+                  }}
+                >
+                  <Text style={styles.signInButtonText}>{t('profile.signIn')}</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.depositSection}>
+                <Text style={styles.depositLabel}>{t('wallet.sendUsdcTo')}</Text>
+                <Pressable onPress={handleCopyAddress} style={styles.addressDisplay}>
+                  <Text style={styles.addressText}>
+                    {addressChunks.map((chunk, i) => (
+                      <Text key={i} style={{ color: ADDRESS_COLORS[i % ADDRESS_COLORS.length] }}>
+                        {chunk}
+                      </Text>
+                    ))}
+                  </Text>
+                  <Text style={styles.copyHint}>
+                    {copied ? t('wallet.copied') : t('wallet.tapToCopy')}
+                  </Text>
+                </Pressable>
+                <Text style={styles.chainsText}>
+                  {t('wallet.onChains', { chains: CHAINS.slice(0, -1).join(', ') + ', ' + t('wallet.or') + ' ' + CHAINS[CHAINS.length - 1] })}
                 </Text>
-                <Text style={styles.copyHint}>
-                  {copied ? t('wallet.copied') : t('wallet.tapToCopy')}
-                </Text>
-              </Pressable>
-              <Text style={styles.chainsText}>
-                {t('wallet.onChains', { chains: CHAINS.slice(0, -1).join(', ') + ', ' + t('wallet.or') + ' ' + CHAINS[CHAINS.length - 1] })}
-              </Text>
-            </View>
+              </View>
+            )
           ) : (
             /* Withdraw: amount input + address */
             <View style={styles.withdrawSection}>
@@ -418,6 +441,7 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     padding: spacing[4],
     paddingBottom: spacing[8],
+    minHeight: 101,
     borderTopWidth: 1,
     borderTopColor: colors.whiteAlpha10,
   },
@@ -450,5 +474,18 @@ const styles = StyleSheet.create({
     color: colors.juiceDark,
     fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
+  },
+  signInButton: {
+    borderWidth: 1,
+    borderColor: colors.success,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[6],
+    marginTop: spacing[4],
+  },
+  signInButtonText: {
+    fontFamily: typography.fontFamily,
+    color: colors.success,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
   },
 });

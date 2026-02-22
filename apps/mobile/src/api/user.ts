@@ -2,11 +2,12 @@ import { apiClient } from './client';
 
 interface User {
   id: string;
-  email: string | null;
-  phone: string | null;
+  email: string;
   name: string | null;
+  wallet_address: string | null;
   smart_account_address: string | null;
-  backup_owner_phone: string | null;
+  deposit_address: string | null;
+  auth_type: 'managed' | 'self_custody';
   locale: string;
   preferred_chain_id: string;
   created_at: string;

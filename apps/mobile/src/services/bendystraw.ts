@@ -275,6 +275,7 @@ const USER_REVNETS_QUERY = `
             version
             decimals
             currency
+            owner
           }
         }
       }
@@ -519,8 +520,9 @@ export async function fetchUserRevnets(
       console.log(`[fetchUserRevnets] Participant ${i}: ${p.project.name} (chain ${p.chainId}, v${p.project.version}, balance: ${p.balance}, logo: ${p.project.logoUri})`);
     });
 
+    const REV_DEPLOYER = '0x2ca27bde7e7d33e353b44c27acfcf6c78dde251d';
     const v5Participants = data.wallet.participants.items.filter(
-      (p: BendystrawParticipant) => p.project.version === 5 && BigInt(p.balance) > 0
+      (p: BendystrawParticipant) => p.project.version === 5 && BigInt(p.balance) > 0 && p.project.owner?.toLowerCase() === REV_DEPLOYER
     );
 
     console.log(`[fetchUserRevnets] Found ${data.wallet.participants.items.length} total participants, ${v5Participants.length} are V5 with balance > 0`);

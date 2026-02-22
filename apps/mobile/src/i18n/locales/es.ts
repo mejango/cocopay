@@ -23,6 +23,24 @@ export default {
     errorSendFailed: 'Error al enviar el enlace',
     checkEmailTitle: 'Revisa tu email',
     checkEmailMessage: 'Te enviamos un enlace mágico para iniciar sesión.',
+    chooseMethod: 'Elige cómo conectar tu cuenta.',
+    email: 'Email',
+    wallet: 'Wallet',
+    enterEmail: 'Ingresa tu email para recibir un código.',
+    sendCode: 'Enviar Código',
+    walletSubtitle: 'Conecta tu wallet para iniciar sesión.',
+    walletConnect: 'Conectar Wallet',
+    walletConnectedAs: 'Conectado como',
+    walletSignHint: 'Firma para guardar.',
+    walletSign: 'Firmar',
+    walletDisconnect: 'Desconectar',
+    connectedSignedIn: 'Conectado como',
+    walletSignIn: 'Firmar Mensaje',
+    walletFetchingNonce: 'Conectando...',
+    walletSigning: 'Firma en tu wallet...',
+    walletVerifying: 'Verificando...',
+    walletVerifyFailed: 'Verificación de wallet fallida',
+    back: '‹ Volver',
   },
   // Verify screen
   verify: {
@@ -100,6 +118,7 @@ export default {
     comingSoonTitle: 'Próximamente',
     comingSoonDeposit: '¡Depósito de USDC vía {{chain}} estará disponible pronto!',
     comingSoonWithdraw: '¡Los retiros estarán disponibles pronto!',
+    signInToDeposit: 'Inicia sesión para fondear tu cuenta',
   },
   // Profile screen
   profile: {
@@ -142,6 +161,15 @@ export default {
     errorEmptyName: 'Por favor, ingresa el nombre de la tienda',
     comingSoonTitle: 'Próximamente',
     comingSoonMessage: '¡La creación de tiendas estará disponible pronto!',
+    deploying: 'Desplegando en todas las cadenas...',
+    deployComplete: 'Continuar',
+    chainPending: 'Pendiente',
+    chainSubmitted: 'Creando...',
+    chainConfirmed: 'Listo',
+    chainFailed: 'Fallido',
+    chainSlow: 'Lento',
+    doNotClose: 'No cierres esta app mientras se despliega',
+    viewExplorer: 'Ver',
   },
   // Store detail screen
   store: {

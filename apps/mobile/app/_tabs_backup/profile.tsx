@@ -4,13 +4,13 @@ import { useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth';
 import { router } from 'expo-router';
 import { usePendingActionStore } from '../../src/stores/pendingAction';
+import { useAuthPopoverStore } from '../../src/stores/authPopover';
 import { colors, typography, spacing, borderRadius, shadows } from '../../src/theme';
 
 // Mock data for demo mode
 const MOCK_USER = {
   name: 'Demo User',
   email: 'demo@cocopay.app',
-  phone: null as string | null,
 };
 
 export default function ProfileScreen() {
@@ -24,7 +24,7 @@ export default function ProfileScreen() {
     useCallback(() => {
       if (!isAuthenticated && !showDemoPreview) {
         setPendingAction({ type: 'navigate_tab', tab: 'profile' });
-        router.push('/auth');
+        useAuthPopoverStore.getState().open();
       }
     }, [isAuthenticated, showDemoPreview, setPendingAction])
   );
@@ -45,7 +45,7 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            router.replace('/(tabs)');
+            router.replace('/');
           },
         },
       ]
@@ -54,7 +54,7 @@ export default function ProfileScreen() {
 
   const handleSignIn = () => {
     setPendingAction({ type: 'navigate_tab', tab: 'profile' });
-    router.push('/auth');
+    useAuthPopoverStore.getState().open();
   };
 
   if (!isAuthenticated && !showDemoPreview) {
@@ -106,7 +106,7 @@ export default function ProfileScreen() {
           </Text>
         </View>
         <Text style={styles.name}>{displayUser?.name || 'No name set'}</Text>
-        <Text style={styles.email}>{displayUser?.email || displayUser?.phone || 'No email set'}</Text>
+        <Text style={styles.email}>{displayUser?.email || 'No email set'}</Text>
       </View>
 
       <View style={styles.menuSection}>

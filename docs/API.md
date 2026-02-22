@@ -21,7 +21,7 @@ All authenticated endpoints require:
 Authorization: Bearer <jwt_token>
 ```
 
-Tokens are obtained via `/auth/session` after phone/passkey verification.
+Tokens are obtained via `/auth/session` after email/passkey verification.
 
 ---
 
@@ -73,13 +73,13 @@ Tokens are obtained via `/auth/session` after phone/passkey verification.
 
 ### Authentication
 
-#### `POST /auth/phone/send`
-Send OTP to phone number.
+#### `POST /auth/email/send`
+Send magic link to email address.
 
 **Request:**
 ```json
 {
-  "phone": "+5548999999999"
+  "email": "user@example.com"
 }
 ```
 
@@ -95,14 +95,14 @@ Send OTP to phone number.
 
 ---
 
-#### `POST /auth/phone/verify`
-Verify OTP and create session.
+#### `POST /auth/email/verify`
+Verify magic link and create session.
 
 **Request:**
 ```json
 {
   "verification_id": "abc123",
-  "code": "123456"
+  "token": "magic-link-token"
 }
 ```
 
@@ -113,7 +113,7 @@ Verify OTP and create session.
     "token": "eyJ...",
     "user": {
       "id": "user_123",
-      "phone": "+5548999999999",
+      "email": "user@example.com",
       "created_at": "2026-02-16T12:00:00Z"
     },
     "is_new_user": true
@@ -218,10 +218,9 @@ Get current user profile.
 {
   "data": {
     "id": "user_123",
-    "phone": "+5548999999999",
+    "email": "joao@example.com",
     "name": "João Silva",
     "smart_account_address": "0x...",
-    "backup_owner_phone": "+5548888888888",
     "created_at": "2026-02-16T12:00:00Z"
   }
 }
@@ -235,8 +234,7 @@ Update user profile.
 **Request:**
 ```json
 {
-  "name": "João Silva",
-  "backup_owner_phone": "+5548888888888"
+  "name": "João Silva"
 }
 ```
 
@@ -689,7 +687,7 @@ Get store team members (owner/admin only).
       "id": "member_123",
       "user_id": "user_789",
       "name": "Carlos",
-      "phone": "+5548777777777",
+      "email": "carlos@example.com",
       "role": "staff",
       "added_at": "2026-02-01T00:00:00Z"
     }
@@ -705,7 +703,7 @@ Add team member (owner only).
 **Request:**
 ```json
 {
-  "phone": "+5548777777777",
+  "email": "carlos@example.com",
   "role": "staff"
 }
 ```

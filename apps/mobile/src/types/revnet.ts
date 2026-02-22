@@ -44,6 +44,7 @@ export interface BendystrawParticipant {
     version: number | null;
     decimals: number | null;
     currency: number | null;
+    owner: string | null;
   };
 }
 

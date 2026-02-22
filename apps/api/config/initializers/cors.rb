@@ -8,14 +8,19 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     # In test, allow all origins; otherwise use configured origins
     if Rails.env.test?
       origins "*"
+
+      resource "*",
+        headers: :any,
+        methods: [:get, :post, :put, :patch, :delete, :options, :head],
+        expose: ["Authorization", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"]
     else
       origins(*ENV.fetch("CORS_ORIGINS", "http://localhost:5173,http://localhost:8081,http://localhost:8082,http://localhost:19006").split(",").map(&:strip))
-    end
 
-    resource "*",
-      headers: :any,
-      methods: [:get, :post, :put, :patch, :delete, :options, :head],
-      credentials: true,
-      expose: ["Authorization", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"]
+      resource "*",
+        headers: :any,
+        methods: [:get, :post, :put, :patch, :delete, :options, :head],
+        credentials: true,
+        expose: ["Authorization", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"]
+    end
   end
 end

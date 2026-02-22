@@ -8,7 +8,7 @@
 
 **Track everything by default.** Storage is cheap, insights are valuable. We can always filter later, but we can't go back and capture events we didn't track.
 
-**Privacy-conscious:** No PII in event properties. Use IDs, not names/phones.
+**Privacy-conscious:** No PII in event properties. Use IDs, not names/emails.
 
 ---
 
@@ -48,10 +48,9 @@
 |-------|------|------------|
 | `app_opened` | App launched | `is_first_open`, `source` |
 | `onboarding_started` | Tapped "Get Started" | - |
-| `phone_entered` | Submitted phone number | `country_code` |
-| `otp_requested` | OTP sent | - |
-| `otp_verified` | OTP correct | `attempts` |
-| `otp_failed` | OTP incorrect | `attempts`, `error_code` |
+| `email_entered` | Submitted email address | - |
+| `magic_link_sent` | Magic link email sent | - |
+| `magic_link_verified` | Magic link clicked and verified | - |
 | `account_created` | New user registered | `auth_method` |
 | `onboarding_completed` | Finished onboarding | `duration_seconds` |
 
@@ -155,8 +154,8 @@
 
 | Event | When | Properties |
 |-------|------|------------|
-| `auth.otp_sent` | OTP SMS sent | `phone_hash`, `provider` |
-| `auth.otp_verified` | OTP verified | `user_id` |
+| `auth.magic_link_sent` | Magic link email sent | `user_id` |
+| `auth.magic_link_verified` | Magic link verified | `user_id` |
 | `auth.session_created` | Session created | `user_id`, `auth_method` |
 | `auth.session_expired` | Session expired | `user_id` |
 | `auth.session_revoked` | Session revoked | `user_id`, `reason` |
@@ -221,8 +220,8 @@
 ```
 app_opened
   → onboarding_started
-    → phone_entered
-      → otp_verified
+    → email_entered
+      → magic_link_verified
         → account_created
           → first_payment_completed
 ```
@@ -412,13 +411,10 @@ When scale requires:
 ### PII Handling
 
 **Never track:**
-- Phone numbers (use `user_id`)
+- Email addresses (use `user_id`)
 - Names
 - Addresses
 - Exact location (use `store_id`)
-
-**Hash if needed:**
-- `phone_hash` for debugging (SHA-256)
 
 ### User Rights (LGPD)
 

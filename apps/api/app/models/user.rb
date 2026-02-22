@@ -16,12 +16,12 @@ class User < ApplicationRecord
   has_many :audit_logs
 
   # Validations
-  validates :phone, uniqueness: { case_sensitive: false }, allow_nil: true
   validates :email, uniqueness: { case_sensitive: false }, allow_nil: true
-  validates :phone, format: { with: /\A\+\d{10,15}\z/ }, allow_nil: true
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_nil: true
+  validates :wallet_address, format: { with: /\A0x[0-9a-fA-F]{40}\z/ }, allow_nil: true
+  validates :wallet_address, uniqueness: true, allow_nil: true
   validates :locale, length: { maximum: 10 }, allow_nil: true
-  validate :phone_or_email_present
+  validate :email_or_wallet_required
 
   # Scopes
   scope :active, -> { where("last_active_at > ?", 30.days.ago) }
@@ -34,18 +34,34 @@ class User < ApplicationRecord
   end
 
   def verified?
-    phone_verified_at.present? || email_verified_at.present?
+    email_verified_at.present?
+  end
+
+  def managed?
+    wallet_address.blank?
+  end
+
+  def self_custody?
+    wallet_address.present?
+  end
+
+  def deposit_address
+    if self_custody?
+      wallet_address
+    else
+      smart_accounts.first&.address
+    end
   end
 
   private
 
-  def phone_or_email_present
-    return if phone.present? || email.present?
-
-    errors.add(:base, "Phone or email is required")
-  end
-
   def normalize_email
     self.email = email&.downcase&.strip
+  end
+
+  def email_or_wallet_required
+    if email.blank? && wallet_address.blank?
+      errors.add(:base, "Either email or wallet address is required")
+    end
   end
 end

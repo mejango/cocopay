@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Image, useWindowDimensions } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireAuth } from '../../src/hooks/useRequireAuth';
@@ -150,6 +150,7 @@ export default function RevnetDetailScreen() {
     cashOutValueUsd: string;
   }>();
   const { requireAuth } = useRequireAuth();
+  const cashOutRef = useRef<View>(null);
   const walletAddress = useBalanceStore((state) => state.walletAddress);
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
@@ -276,20 +277,22 @@ export default function RevnetDetailScreen() {
   }, [projectId, chainId, volumeTimeRange, projectStats?.volumeUsd, projectStats?.tokenSymbol]);
 
   const handleCashOut = () => {
-    if (!requireAuth({ type: 'action', action: 'cash_out' })) {
-      return;
-    }
-    router.push({
-      pathname: '/cash-out',
-      params: {
-        storeId: params.id,
-        storeName: params.name,
-        balance: params.balance,
-        tokenSymbol: params.tokenSymbol,
-        chainId: params.chainId,
-        projectId: params.projectId,
-        rawBalance: params.rawBalance,
-      },
+    cashOutRef.current?.measureInWindow((x, y, w, h) => {
+      if (!requireAuth({ type: 'action', action: 'cash_out' }, { x, y, width: w, height: h })) {
+        return;
+      }
+      router.push({
+        pathname: '/cash-out',
+        params: {
+          storeId: params.id,
+          storeName: params.name,
+          balance: params.balance,
+          tokenSymbol: params.tokenSymbol,
+          chainId: params.chainId,
+          projectId: params.projectId,
+          rawBalance: params.rawBalance,
+        },
+      });
     });
   };
 
@@ -470,6 +473,7 @@ export default function RevnetDetailScreen() {
 
               {menuExpanded && (
                 <Pressable
+                  ref={cashOutRef}
                   style={({ pressed }) => [
                     styles.button,
                     styles.cashOutButton,
@@ -485,6 +489,17 @@ export default function RevnetDetailScreen() {
         </View>
 
         <View style={styles.dockSpacer} />
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            styles.qrButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={() => router.push('/pay')}
+        >
+          <Text style={styles.qrButtonText}>QR</Text>
+        </Pressable>
 
         <Pressable
           style={({ pressed }) => [
@@ -698,6 +713,7 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     padding: spacing[4],
     paddingBottom: spacing[8],
+    minHeight: 101,
     borderTopWidth: 1,
     borderTopColor: colors.whiteAlpha10,
   },
@@ -716,6 +732,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colors.gray500,
+  },
+  qrButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.whiteAlpha20,
+  },
+  qrButtonText: {
+    fontFamily: typography.fontFamily,
+    color: colors.gray400,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
   },
   spendButton: {
     backgroundColor: colors.juiceCyan,
@@ -752,17 +779,5 @@ const styles = StyleSheet.create({
     color: colors.juiceDark,
     fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
-  },
-  cashOutButton: {
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[6],
-  },
-  cashOutButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.gray400,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
   },
 });

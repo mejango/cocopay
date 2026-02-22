@@ -1,14 +1,22 @@
 import { View, Text, StyleSheet, Pressable, TextInput, Alert, useWindowDimensions, ScrollView, Image } from 'react-native';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import { useRequireAuth } from '../src/hooks/useRequireAuth';
+import { useAuthStore } from '../src/stores/auth';
+import { storesApi } from '../src/api/stores';
+import { useDeployRevnet } from '../src/hooks/useDeployRevnet';
+import { DeployProgress } from '../src/components/DeployProgress';
 import { colors, typography, spacing } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 
+const PROD_CHAIN_IDS = [8453, 10, 42161, 1]; // Base, Optimism, Arbitrum, Ethereum
+const TEST_CHAIN_IDS = [84532, 11155420, 421614, 11155111]; // Base Sepolia, OP Sepolia, Arb Sepolia, Eth Sepolia
+
 export default function CreateStoreScreen() {
   const { requireAuth } = useRequireAuth();
+  const user = useAuthStore((state) => state.user);
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
@@ -17,6 +25,26 @@ export default function CreateStoreScreen() {
   const [website, setWebsite] = useState('');
   const [logoUri, setLogoUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [testMode, setTestMode] = useState(false);
+  const [phase, setPhase] = useState<'form' | 'deploying'>('form');
+  const [storeId, setStoreId] = useState<string | null>(null);
+  const createRef = useRef<View>(null);
+
+  const { status: deployStatus, chainStates, slowChainIds, error: deployError, deploy, dismiss } = useDeployRevnet();
+
+  // Navigate to store on completion
+  useEffect(() => {
+    if (deployStatus === 'completed' && storeId) {
+      router.replace(`/store/${storeId}`);
+    }
+  }, [deployStatus, storeId]);
+
+  // Show error alert on failure
+  useEffect(() => {
+    if (deployStatus === 'failed' && deployError) {
+      Alert.alert(t('createStore.errorTitle'), deployError);
+    }
+  }, [deployStatus, deployError, t]);
 
   const pickLogo = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -32,28 +60,137 @@ export default function CreateStoreScreen() {
   };
 
   const handleDismiss = () => {
+    if (phase === 'deploying' && deployStatus === 'processing') {
+      // Don't allow dismissing while actively deploying
+      return;
+    }
+    if (phase === 'deploying') {
+      dismiss();
+      setPhase('form');
+      setIsLoading(false);
+      return;
+    }
     router.back();
   };
 
-  const handleCreate = async () => {
-    if (!requireAuth({ type: 'action', action: 'create_store' })) {
-      return;
-    }
-
+  const doCreate = async () => {
     if (!storeName.trim()) {
       Alert.alert(t('createStore.errorTitle'), t('createStore.errorEmptyName'));
       return;
     }
 
+    if (!user) return;
+
     setIsLoading(true);
     try {
-      // TODO: API call to create store
-      Alert.alert(t('createStore.comingSoonTitle'), t('createStore.comingSoonMessage'));
+      // 1. Create store record in backend
+      const store = await storesApi.create({
+        name: storeName.trim(),
+        symbol: shortName.trim() || storeName.trim().slice(0, 7).toUpperCase(),
+        description: website || undefined,
+      });
+
+      setStoreId(store.id);
+
+      if (user.auth_type === 'self_custody' && user.wallet_address) {
+        // Self-custody: deploy via hook with per-chain progress
+        setPhase('deploying');
+
+        await deploy({
+          name: storeName.trim(),
+          ticker: shortName.trim() || storeName.trim().slice(0, 7).toUpperCase(),
+          walletAddress: user.wallet_address,
+          chainIds: testMode ? TEST_CHAIN_IDS : PROD_CHAIN_IDS,
+          testMode,
+        });
+      } else {
+        // Managed users: backend handles deployment via StoreDeploymentJob
+        router.replace(`/store/${store.id}`);
+      }
+    } catch (error) {
+      setPhase('form');
+      Alert.alert(
+        t('createStore.errorTitle'),
+        error instanceof Error ? error.message : t('createStore.comingSoonMessage')
+      );
     } finally {
-      setIsLoading(false);
+      if (phase === 'form') {
+        setIsLoading(false);
+      }
     }
   };
 
+  const handleCreate = () => {
+    createRef.current?.measureInWindow((x, y, w, h) => {
+      if (!requireAuth({ type: 'action', action: 'create_store' }, { x, y, width: w, height: h })) {
+        return;
+      }
+      doCreate();
+    });
+  };
+
+  const handleSlowDismiss = () => {
+    if (storeId) {
+      router.replace(`/store/${storeId}`);
+    }
+  };
+
+  // ── Deploying phase ──
+  if (phase === 'deploying') {
+    return (
+      <PageContainer>
+        <View style={styles.container}>
+          {!isMobile && (
+            <View style={styles.topBar}>
+              <View style={styles.topBackButton} />
+            </View>
+          )}
+
+          <ScrollView
+            style={[styles.content, isMobile && styles.contentMobile]}
+            contentContainerStyle={styles.contentContainer}
+          >
+            <Text style={styles.title}>{storeName}</Text>
+            <Text style={styles.deployingLabel}>{t('createStore.deploying')}</Text>
+
+            <View style={styles.progressSection}>
+              <DeployProgress chainStates={chainStates} slowChainIds={slowChainIds} />
+            </View>
+
+            {deployStatus === 'failed' && deployError ? (
+              <Text style={styles.errorText}>{deployError}</Text>
+            ) : (
+              <Text style={styles.doNotClose}>{t('createStore.doNotClose')}</Text>
+            )}
+
+            {deployStatus === 'failed' && (
+              <View style={styles.slowDismissContainer}>
+                <Pressable
+                  style={({ pressed }) => [styles.dismissButton, pressed && styles.buttonPressed]}
+                  onPress={handleDismiss}
+                >
+                  <Text style={styles.dismissButtonText}>{'\u2190'}</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {slowChainIds.length > 0 && deployStatus !== 'failed' && (
+              <View style={styles.slowDismissContainer}>
+                <Pressable
+                  style={({ pressed }) => [styles.dismissButton, pressed && styles.buttonPressed]}
+                  onPress={handleSlowDismiss}
+                >
+                  <Text style={styles.dismissButtonText}>{t('createStore.deployComplete')}</Text>
+                </Pressable>
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </PageContainer>
+    );
+  }
+
+  // ── Form phase ──
   return (
     <PageContainer>
       <View style={styles.container}>
@@ -61,7 +198,7 @@ export default function CreateStoreScreen() {
         {!isMobile && (
           <View style={styles.topBar}>
             <Pressable onPress={handleDismiss} style={styles.topBackButton}>
-              <Text style={styles.topBackArrow}>←</Text>
+              <Text style={styles.topBackArrow}>{'\u2190'}</Text>
             </Pressable>
           </View>
         )}
@@ -101,7 +238,7 @@ export default function CreateStoreScreen() {
                 <Text style={styles.logoPlaceholderText}>+</Text>
               </View>
             )}
-            <Text style={styles.logoHint}>{t('createStore.logoHint')}</Text>
+
           </Pressable>
 
           <Text style={styles.label}>{t('createStore.storeNameLabel')}</Text>
@@ -119,7 +256,7 @@ export default function CreateStoreScreen() {
           <TextInput
             style={styles.input}
             value={shortName}
-            onChangeText={(text) => setShortName(text.toUpperCase().slice(0, 7))}
+            onChangeText={(text) => setShortName(text.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 7))}
             placeholder={t('createStore.shortNamePlaceholder')}
             placeholderTextColor={colors.gray500}
             autoCapitalize="characters"
@@ -145,7 +282,7 @@ export default function CreateStoreScreen() {
         <View style={styles.dockLeft}>
           {isMobile && (
             <Pressable onPress={handleDismiss} style={styles.bottomBackButton}>
-              <Text style={styles.topBackArrow}>←</Text>
+              <Text style={styles.topBackArrow}>{'\u2190'}</Text>
             </Pressable>
           )}
         </View>
@@ -153,6 +290,17 @@ export default function CreateStoreScreen() {
         <View style={styles.dockSpacer} />
 
         <Pressable
+          style={styles.modeToggle}
+          onPress={() => setTestMode((v) => !v)}
+          disabled={isLoading}
+        >
+          <Text style={[styles.modeLabel, !testMode && styles.modeLabelActive]}>Real</Text>
+          <Text style={styles.modeSeparator}>/</Text>
+          <Text style={[styles.modeLabel, testMode && styles.modeLabelActive]}>Test</Text>
+        </Pressable>
+
+        <Pressable
+          ref={createRef}
           style={({ pressed }) => [
             styles.createButton,
             pressed && styles.buttonPressed,
@@ -301,6 +449,7 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     padding: spacing[4],
     paddingBottom: spacing[8],
+    minHeight: 101,
     borderTopWidth: 1,
     borderTopColor: colors.whiteAlpha10,
   },
@@ -315,6 +464,25 @@ const styles = StyleSheet.create({
   bottomBackButton: {
     paddingVertical: spacing[2],
     paddingRight: spacing[2],
+  },
+  modeToggle: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginRight: spacing[3],
+  },
+  modeLabel: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.xs,
+    color: colors.gray500,
+  },
+  modeLabelActive: {
+    color: colors.white,
+  },
+  modeSeparator: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.xs,
+    color: colors.gray500,
+    marginHorizontal: 4,
   },
   createButton: {
     backgroundColor: colors.juiceCyan,
@@ -332,6 +500,45 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily,
     color: colors.juiceDark,
     fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+  },
+  // Deploying phase styles
+  deployingLabel: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+    color: colors.gray400,
+    marginBottom: spacing[6],
+  },
+  progressSection: {
+    marginBottom: spacing[6],
+  },
+  doNotClose: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.xs,
+    color: colors.warning,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+    color: colors.danger,
+    textAlign: 'center',
+  },
+  slowDismissContainer: {
+    marginTop: spacing[6],
+    alignItems: 'center',
+  },
+  dismissButton: {
+    backgroundColor: colors.juiceDarkLighter,
+    borderWidth: 1,
+    borderColor: colors.whiteAlpha20,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[6],
+  },
+  dismissButtonText: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.base,
+    color: colors.white,
     fontWeight: typography.weights.bold,
   },
 });

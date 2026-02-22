@@ -26,7 +26,7 @@
 
 ```sql
 -- User authentication methods
-CREATE TYPE auth_method AS ENUM ('phone', 'passkey', 'wallet');
+CREATE TYPE auth_method AS ENUM ('email', 'passkey', 'wallet');
 
 -- Store team roles
 CREATE TYPE store_role AS ENUM ('owner', 'admin', 'staff');
@@ -66,13 +66,11 @@ CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Identity
-  phone VARCHAR(20) UNIQUE NOT NULL,
-  phone_verified_at TIMESTAMPTZ,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  email_verified_at TIMESTAMPTZ,
   name VARCHAR(255),
-  email VARCHAR(255),
 
   -- Recovery
-  backup_owner_phone VARCHAR(20),
   backup_owner_activated_at TIMESTAMPTZ,
   last_active_at TIMESTAMPTZ DEFAULT NOW(),
 
@@ -85,8 +83,7 @@ CREATE TABLE users (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_users_phone ON users(phone);
-CREATE INDEX idx_users_email ON users(email) WHERE email IS NOT NULL;
+CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_last_active ON users(last_active_at);
 ```
 

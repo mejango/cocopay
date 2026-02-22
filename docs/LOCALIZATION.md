@@ -129,32 +129,32 @@ pt-BR:
         "en": "Get Started"
       }
     },
-    "phone": {
+    "email": {
       "title": {
-        "pt-BR": "Qual é o seu celular?",
-        "en": "What's your phone number?"
+        "pt-BR": "Qual é o seu email?",
+        "en": "What's your email?"
       },
       "placeholder": {
-        "pt-BR": "(48) 99999-9999",
-        "en": "(48) 99999-9999"
+        "pt-BR": "seu@email.com",
+        "en": "you@email.com"
       },
       "cta": {
-        "pt-BR": "Enviar código",
-        "en": "Send code"
+        "pt-BR": "Enviar link",
+        "en": "Send link"
       }
     },
-    "otp": {
+    "magic_link": {
       "title": {
-        "pt-BR": "Digite o código",
-        "en": "Enter the code"
+        "pt-BR": "Verifique seu email",
+        "en": "Check your email"
       },
       "subtitle": {
-        "pt-BR": "Enviamos um código para {{phone}}",
-        "en": "We sent a code to {{phone}}"
+        "pt-BR": "Enviamos um link para {{email}}",
+        "en": "We sent a link to {{email}}"
       },
       "resend": {
-        "pt-BR": "Reenviar código",
-        "en": "Resend code"
+        "pt-BR": "Reenviar link",
+        "en": "Resend link"
       },
       "resend_countdown": {
         "pt-BR": "Reenviar em {{seconds}}s",
@@ -367,9 +367,9 @@ pt-BR:
       "pt-BR": "Erro de conexão. Verifique sua internet.",
       "en": "Connection error. Check your internet."
     },
-    "invalid_otp": {
-      "pt-BR": "Código incorreto. Tente novamente.",
-      "en": "Invalid code. Please try again."
+    "invalid_magic_link": {
+      "pt-BR": "Link inválido ou expirado. Tente novamente.",
+      "en": "Invalid or expired link. Please try again."
     },
     "session_expired": {
       "pt-BR": "Sua sessão expirou. Faça login novamente.",
@@ -595,7 +595,7 @@ CocoPay é o aplicativo de pagamentos da comunidade de Florianópolis.
 ✓ Receba pagamentos se você é comerciante
 
 Como funciona:
-1. Cadastre-se com seu celular
+1. Cadastre-se com seu email
 2. Escaneie o QR code da loja
 3. Pague e ganhe recompensas automaticamente
 
@@ -622,7 +622,7 @@ CocoPay is the community payments app for Florianópolis.
 ✓ Receive payments if you're a merchant
 
 How it works:
-1. Sign up with your phone
+1. Sign up with your email
 2. Scan the store's QR code
 3. Pay and earn rewards automatically
 

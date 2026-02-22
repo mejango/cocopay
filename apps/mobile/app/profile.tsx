@@ -1,8 +1,10 @@
 import { View, Text, StyleSheet, Pressable, Alert, ScrollView } from 'react-native';
+import { useRef } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../src/stores/auth';
 import { usePendingActionStore } from '../src/stores/pendingAction';
+import { useAuthPopoverStore } from '../src/stores/authPopover';
 import { colors, typography, spacing, borderRadius, shadows } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 
@@ -10,7 +12,6 @@ import { PageContainer } from '../src/components/PageContainer';
 const MOCK_USER = {
   name: 'Demo User',
   email: 'demo@cocopay.app',
-  phone: null as string | null,
 };
 
 export default function ProfileScreen() {
@@ -19,6 +20,7 @@ export default function ProfileScreen() {
   const logout = useAuthStore((state) => state.logout);
   const setPendingAction = usePendingActionStore((state) => state.setPendingAction);
   const { t } = useTranslation();
+  const signInRef = useRef<View>(null);
 
   const handleDismiss = () => {
     router.back();
@@ -26,7 +28,9 @@ export default function ProfileScreen() {
 
   const handleSignIn = () => {
     setPendingAction({ type: 'action', action: 'view_profile' });
-    router.push('/auth');
+    signInRef.current?.measureInWindow((x, y, w, h) => {
+      useAuthPopoverStore.getState().open({ x, y, width: w, height: h });
+    });
   };
 
   const handleLogout = () => {
@@ -71,6 +75,7 @@ export default function ProfileScreen() {
               {t('profile.signInSubtitle')}
             </Text>
             <Pressable
+              ref={signInRef}
               style={({ pressed }) => [styles.primaryButton, pressed && styles.primaryButtonPressed]}
               onPress={handleSignIn}
             >
@@ -89,7 +94,7 @@ export default function ProfileScreen() {
                 </Text>
               </View>
               <Text style={styles.name}>{displayUser?.name || t('profile.noName')}</Text>
-              <Text style={styles.email}>{displayUser?.email || displayUser?.phone || t('profile.noEmail')}</Text>
+              <Text style={styles.email}>{displayUser?.email || t('profile.noEmail')}</Text>
             </View>
 
             <View style={styles.menuSection}>

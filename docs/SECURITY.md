@@ -13,7 +13,7 @@
 | User USDC balances | High | Users |
 | Store token balances | Medium | Users |
 | Merchant revenue | High | Merchants |
-| User identity (phone/email) | Medium | Users |
+| User identity (email) | Medium | Users |
 | Transaction history | Low | Users |
 | Signing keys (managed wallets) | Critical | CocoPay (custodial) |
 
@@ -77,47 +77,6 @@
 ---
 
 ## Authentication Security
-
-### Phone/SMS OTP
-
-```typescript
-// OTP generation
-const otp = crypto.randomInt(100000, 999999).toString()
-
-// OTP storage
-await db.otps.insert({
-  phone: hashPhone(phone),  // Hashed for privacy
-  otp: hashOtp(otp),        // Hashed, not plaintext
-  expiresAt: Date.now() + 5 * 60 * 1000,  // 5 minutes
-  attempts: 0,
-})
-
-// OTP verification
-const record = await db.otps.findOne({ phone: hashPhone(phone) })
-
-if (record.attempts >= 3) {
-  throw new Error('Too many attempts. Request new code.')
-}
-
-if (Date.now() > record.expiresAt) {
-  throw new Error('Code expired. Request new code.')
-}
-
-if (!verifyHash(otp, record.otp)) {
-  await db.otps.update({ id: record.id, attempts: record.attempts + 1 })
-  throw new Error('Invalid code.')
-}
-
-// Success - delete OTP and create session
-await db.otps.delete({ id: record.id })
-```
-
-**Protections:**
-- OTP is hashed, not stored plaintext
-- 5-minute expiration
-- 3 attempt limit before requiring new OTP
-- Phone numbers hashed in OTP table
-- Rate limit: 1 OTP per phone per 60 seconds
 
 ### Passkey (WebAuthn)
 
@@ -338,8 +297,6 @@ const rateLimits = {
   'user:payments': { limit: 50, window: '1h' },
   'user:cashout': { limit: 5, window: '1h' },
 
-  // By phone (for OTP)
-  'phone:otp': { limit: 5, window: '1h' },
 }
 
 // Implementation
@@ -555,8 +512,7 @@ async function requireBiometric(reason: string): Promise<boolean> {
 
 | Data | Collected | Reason |
 |------|-----------|--------|
-| Phone number | Yes | Authentication |
-| Email | Optional | Backup auth method |
+| Email | Yes | Authentication (primary identity) |
 | Name | No | Not needed |
 | Location | Optional | Nearby stores feature |
 | Transaction history | Yes | User's own history |
@@ -608,7 +564,6 @@ async function deleteAccount(userId: string) {
   // 3. Anonymize (keep for compliance, remove PII)
   await db.users.update({
     id: userId,
-    phone: null,
     email: null,
     deletedAt: new Date(),
   })

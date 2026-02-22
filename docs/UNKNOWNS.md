@@ -96,7 +96,7 @@ Where:
 ## MVP Requirements
 
 ### Must Have
-- [ ] User auth (phone/passkey - build like juicy-vision)
+- [ ] User auth (email magic link/passkey - build like juicy-vision)
 - [ ] Smart accounts (ERC-4337, deterministic via CREATE2)
 - [ ] Store creation (omnichain revnet deployment via Relayr)
 - [ ] USDC payments (into revnets)

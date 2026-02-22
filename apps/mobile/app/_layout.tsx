@@ -1,11 +1,14 @@
 import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WagmiProvider } from 'wagmi';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../src/i18n';
 import { useAuthStore } from '../src/stores/auth';
+import { AuthPopover } from '../src/components/AuthPopover';
 import { colors } from '../src/theme';
+import { wagmiConfig } from '../src/config/wagmi';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +37,7 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
 export default function RootLayout() {
   return (
     <I18nextProvider i18n={i18n}>
+    <WagmiProvider config={wagmiConfig}>
     <QueryClientProvider client={queryClient}>
       <AuthCheck>
         <Stack
@@ -83,17 +87,12 @@ export default function RootLayout() {
             }}
           />
 
-          {/* Auth flow */}
-          <Stack.Screen
-            name="auth"
-            options={{
-              presentation: 'fullScreenModal',
-            }}
-          />
         </Stack>
+        <AuthPopover />
         <StatusBar style="light" />
       </AuthCheck>
     </QueryClientProvider>
+    </WagmiProvider>
     </I18nextProvider>
   );
 }

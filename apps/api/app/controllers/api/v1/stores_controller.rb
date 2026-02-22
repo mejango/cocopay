@@ -43,8 +43,11 @@ module Api
             accepted_at: Time.current
           )
 
-          # Queue deployment job
-          # StoreDeploymentJob.perform_later(store.id)
+          # For managed users, queue backend-side revnet deployment via Relayr
+          if current_user.managed?
+            StoreDeploymentJob.perform_later(store.id, current_user.id)
+          end
+          # Self-custody users deploy client-side via Relayr prepaid bundles
         end
 
         render_success(serialize_store(store), status: :created)

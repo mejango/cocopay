@@ -18,6 +18,30 @@ RSpec.describe "API V1 Users", type: :request do
       get "/api/v1/user", headers: json_headers
       expect(response).to have_http_status(:unauthorized)
     end
+
+    context "email user (managed)" do
+      it "returns auth_type managed and smart_account deposit_address" do
+        user.smart_accounts.create!(address: "0x" + "d" * 40, chain_id: "8453", salt: "0x1234", owner_address: "0x" + "a" * 40)
+        get "/api/v1/user", headers: authenticated_headers(user)
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response[:data][:auth_type]).to eq("managed")
+        expect(json_response[:data][:deposit_address]).to eq("0x" + "d" * 40)
+      end
+    end
+
+    context "wallet user (self_custody)" do
+      let(:wallet_user) { create(:wallet_user, :verified) }
+
+      it "returns auth_type self_custody and wallet deposit_address" do
+        get "/api/v1/user", headers: authenticated_headers(wallet_user)
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response[:data][:auth_type]).to eq("self_custody")
+        expect(json_response[:data][:deposit_address]).to eq(wallet_user.wallet_address)
+        expect(json_response[:data][:wallet_address]).to eq(wallet_user.wallet_address)
+      end
+    end
   end
 
   describe "PATCH /api/v1/user" do

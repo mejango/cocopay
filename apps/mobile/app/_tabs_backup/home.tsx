@@ -24,7 +24,9 @@ const MOCK_BALANCE = {
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
   const { isAuthenticated, requireAuth } = useRequireAuth();
-  const { totalUsd, breakdown, availableBonus, isLoading, fetch } = useBalanceStore();
+  const { totalUsd, isLoading, fetch } = useBalanceStore();
+  const breakdown: { label: string; amount_usd: string }[] = [];
+  const availableBonus = '0.00';
   const [refreshing, setRefreshing] = useState(false);
   const [showDemoPreview, setShowDemoPreview] = useState(false);
 

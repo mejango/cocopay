@@ -26,7 +26,7 @@
 ┌────────▼────────┐      ┌──────────▼──────────┐    ┌─────────▼─────────┐
 │  Auth Service   │      │  Payment Service    │    │  Store Service    │
 │                 │      │                     │    │                   │
-│ • Phone/Email   │      │ • Balance calc      │    │ • Store registry  │
+│ • Email         │      │ • Balance calc      │    │ • Store registry  │
 │ • Passkey       │      │ • Token routing     │    │ • Revnet deploy   │
 │ • Wallet (SIWE) │      │ • Cash out          │    │ • QR generation   │
 └────────┬────────┘      └──────────┬──────────┘    └─────────┬─────────┘
@@ -135,8 +135,7 @@ Stores exist on multiple chains. Users can pay from any supported chain.
 ```sql
 CREATE TABLE users (
   id UUID PRIMARY KEY,
-  phone TEXT UNIQUE,
-  email TEXT UNIQUE,
+  email TEXT UNIQUE NOT NULL,
   display_name TEXT,
   is_merchant BOOLEAN DEFAULT false,
   smart_account_address TEXT,  -- ERC-4337 address
@@ -172,7 +171,6 @@ CREATE TABLE stores (
   balance_usdc NUMERIC DEFAULT 0,
 
   -- Backup owner (for recovery if owner loses access)
-  -- Must be a user with email (phone-only users can't be backup)
   backup_owner_id UUID REFERENCES users(id),
 
   -- Stats (cached, updated periodically)
@@ -315,11 +313,11 @@ CREATE TABLE token_balances (
 
 Handles user authentication across three modes:
 
-#### 1. Phone/Email (Managed)
+#### 1. Email Magic Link (Managed)
 ```
-User enters phone → Server sends OTP → User verifies → Session created
-                                                              ↓
-                                          Smart account derived from user ID
+User enters email → Server sends magic link → User clicks link → Session created
+                                                                        ↓
+                                                    Smart account derived from user ID
 ```
 
 #### 2. Passkey (Managed)
@@ -1006,12 +1004,12 @@ Key points:
 
 ### Auth
 ```
-POST /auth/phone/send-otp     # Send OTP to phone
-POST /auth/phone/verify       # Verify OTP
-POST /auth/passkey/register   # Register passkey
-POST /auth/passkey/login      # Login with passkey
-POST /auth/wallet/siwe        # Sign-In-With-Ethereum
-POST /auth/logout             # End session
+POST /auth/email/send          # Send magic link to email
+POST /auth/email/verify        # Verify magic link
+POST /auth/passkey/register    # Register passkey
+POST /auth/passkey/login       # Login with passkey
+POST /auth/wallet/siwe         # Sign-In-With-Ethereum
+POST /auth/logout              # End session
 ```
 
 ### User

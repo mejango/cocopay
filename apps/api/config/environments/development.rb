@@ -32,8 +32,16 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = false
   config.action_mailer.perform_caching = false
 
-  # Use letter_opener in development
-  config.action_mailer.delivery_method = :letter_opener
+  # Use Mailgun if credentials are set, otherwise fall back to letter_opener
+  if ENV["MAILGUN_API_KEY"].present?
+    config.action_mailer.delivery_method = :mailgun
+    config.action_mailer.mailgun_settings = {
+      api_key: ENV["MAILGUN_API_KEY"],
+      domain: ENV.fetch("MAILGUN_DOMAIN", "cocopay.biz")
+    }
+  else
+    config.action_mailer.delivery_method = :letter_opener
+  end
   config.action_mailer.perform_deliveries = true
 
   # Print deprecation notices to the Rails logger.

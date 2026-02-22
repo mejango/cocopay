@@ -22,6 +22,9 @@ gem "jwt", "~> 2.7"
 gem "eth", "~> 0.5"
 gem "faraday", "~> 2.7"
 
+# Email delivery
+gem "mailgun-ruby", "~> 1.2"
+
 # Background jobs
 gem "solid_queue", "~> 1.0"
 # gem "mission_control-jobs", "~> 0.3"  # Requires asset pipeline, disabled for API-only mode

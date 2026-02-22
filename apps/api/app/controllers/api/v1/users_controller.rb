@@ -93,17 +93,18 @@ module Api
       private
 
       def user_params
-        params.permit(:name, :backup_owner_phone, :locale, :preferred_chain_id)
+        params.permit(:name, :locale, :preferred_chain_id)
       end
 
       def serialize_user(user)
         {
           id: user.id,
           email: user.email,
-          phone: user.phone,
           name: user.name,
+          wallet_address: user.wallet_address,
           smart_account_address: user.smart_accounts.first&.address,
-          backup_owner_phone: user.backup_owner_phone,
+          deposit_address: user.deposit_address,
+          auth_type: user.self_custody? ? "self_custody" : "managed",
           locale: user.locale,
           preferred_chain_id: user.preferred_chain_id,
           created_at: user.created_at.iso8601

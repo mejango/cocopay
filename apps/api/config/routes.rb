@@ -10,6 +10,8 @@ Rails.application.routes.draw do
       scope :auth do
         post "email/send", to: "auth#send_magic_link"
         post "email/verify", to: "auth#verify_magic_link"
+        post "wallet/nonce", to: "auth#wallet_nonce"
+        post "wallet/siwe", to: "auth#verify_siwe"
         delete "session", to: "auth#logout"
       end
 
@@ -29,6 +31,12 @@ Rails.application.routes.draw do
         member do
           get :status
         end
+      end
+
+      # Deployments (Relayr proxy)
+      scope :deployments do
+        post "bundle", to: "deployments#create_bundle"
+        get "bundle/:bundle_id", to: "deployments#bundle_status"
       end
 
       # Stores
