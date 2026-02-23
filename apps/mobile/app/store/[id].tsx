@@ -170,6 +170,7 @@ export default function RevnetDetailScreen() {
   const [paymentsGraph, setPaymentsGraph] = useState<GraphData>({ values: [], labels: [] });
   const [volumeGraph, setVolumeGraph] = useState<GraphData>({ values: [], labels: [] });
   const [timeRange, setTimeRange] = useState<TimeRange>('1m');
+  const [menuExpanded, setMenuExpanded] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
@@ -452,17 +453,30 @@ export default function RevnetDetailScreen() {
         <View style={styles.dockSpacer} />
 
         {hasBalance && (
-          <Pressable
-            ref={cashOutRef}
-            style={({ pressed }) => [
-              styles.button,
-              styles.cashOutButton,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={handleCashOut}
-          >
-            <Text style={styles.cashOutButtonText}>{t('store.cashOut')}</Text>
-          </Pressable>
+          menuExpanded ? (
+            <Pressable
+              ref={cashOutRef}
+              style={({ pressed }) => [
+                styles.button,
+                styles.qrButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={handleCashOut}
+            >
+              <Text style={styles.qrButtonText}>{t('store.cashOut')}</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                styles.qrButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => setMenuExpanded(true)}
+            >
+              <Text style={styles.qrButtonText}>⋮</Text>
+            </Pressable>
+          )
         )}
 
         <Pressable
@@ -709,12 +723,6 @@ function useStyles(t: BrandTheme) {
     buttonPressed: {
       opacity: 0.9,
     },
-    cashOutButton: {
-      backgroundColor: 'transparent',
-      borderWidth: 1,
-      borderColor: t.colors.textMuted,
-      borderRadius: t.borderRadius.sm,
-    },
     qrButton: {
       backgroundColor: t.colors.backgroundSecondary,
       borderWidth: 1,
@@ -739,12 +747,6 @@ function useStyles(t: BrandTheme) {
     bottomBackButton: {
       paddingVertical: spacing[2],
       paddingRight: spacing[2],
-    },
-    cashOutButtonText: {
-      fontFamily: t.typography.fontFamily,
-      color: t.colors.textSecondary,
-      fontSize: t.typography.sizes.lg,
-      fontWeight: t.typography.weights.semibold,
     },
     spendButtonText: {
       fontFamily: t.typography.fontFamily,
