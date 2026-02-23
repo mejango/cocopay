@@ -17,7 +17,7 @@ Rails.application.configure do
 
   # Enable caching
   config.action_controller.perform_caching = true
-  config.cache_store = :redis_cache_store, { url: ENV.fetch("REDIS_URL") }
+  config.cache_store = :memory_store
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
