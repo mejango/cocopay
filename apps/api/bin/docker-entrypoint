@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+# Run migrations if DATABASE_URL is set
+if [ -n "$DATABASE_URL" ]; then
+  echo "Running database migrations..."
+  bin/rails db:migrate
+fi
+
+exec "$@"

@@ -85,5 +85,6 @@ RUN groupadd --system --gid 1000 rails && \
 
 USER rails:rails
 
+ENTRYPOINT ["./bin/docker-entrypoint"]
 EXPOSE 3000
 CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
