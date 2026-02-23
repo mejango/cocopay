@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Image, useWindowDimensions } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useScrollHeader } from '../../src/hooks/useScrollHeader';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireAuth } from '../../src/hooks/useRequireAuth';
-import { spacing, useTheme } from '../../src/theme';
+import { spacing, typography, useTheme } from '../../src/theme';
 import type { BrandTheme } from '../../src/theme';
 import { PageContainer } from '../../src/components/PageContainer';
 import {
@@ -162,6 +164,7 @@ export default function RevnetDetailScreen() {
   const styles = useStyles(theme);
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
+  const { scrollHandler, headerAnimatedStyle } = useScrollHeader(60);
 
   const [projectStats, setProjectStats] = useState<ProjectStats | null>(null);
 
@@ -357,7 +360,7 @@ export default function RevnetDetailScreen() {
             </Pressable>
           </View>
         )}
-        <View style={[styles.headerRow, isMobile && styles.headerRowMobile]}>
+        <Animated.View style={[styles.headerRow, isMobile && styles.headerRowMobile, headerAnimatedStyle]}>
           {params.logoUri ? (
             <Image source={{ uri: params.logoUri }} style={styles.headerLogo} />
           ) : null}
@@ -365,10 +368,10 @@ export default function RevnetDetailScreen() {
             <Text style={styles.headerName}>{params.name}</Text>
             <Text style={styles.headerToken}>{tokenSymbol}</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Content */}
-        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        <Animated.ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} onScroll={scrollHandler} scrollEventThrottle={16}>
         {/* VOLUME DA REDE - moved to top */}
         <View style={styles.statSection}>
           <View style={styles.volumeHeader}>
@@ -455,7 +458,7 @@ export default function RevnetDetailScreen() {
             formatValue={formatPayments}
           />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Bottom Buttons */}
       <View style={styles.buttonContainer}>
@@ -563,7 +566,7 @@ function useStyles(t: BrandTheme) {
       paddingRight: spacing[3],
     },
     topBackArrow: {
-      fontFamily: t.typography.fontFamily,
+      fontFamily: typography.fontFamily,
       color: t.colors.accent,
       fontSize: 32,
     },
@@ -584,7 +587,7 @@ function useStyles(t: BrandTheme) {
     contentContainer: {
       paddingHorizontal: spacing[4],
       paddingTop: spacing[4],
-      paddingBottom: spacing[4],
+      paddingBottom: 120,
     },
     storeName: {
       fontFamily: t.typography.fontFamily,
@@ -721,9 +724,11 @@ function useStyles(t: BrandTheme) {
       gap: spacing[3],
       padding: spacing[4],
       paddingBottom: spacing[8],
-      minHeight: 101,
-      borderTopWidth: 1,
-      borderTopColor: t.colors.border,
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: t.colors.backgroundTranslucent,
     },
     dockSpacer: {
       flex: 1,
@@ -747,7 +752,7 @@ function useStyles(t: BrandTheme) {
     qrButton: {
       backgroundColor: 'transparent',
       borderWidth: 1,
-      borderColor: t.colors.borderHover,
+      borderColor: t.colors.border,
       borderRadius: t.borderRadius.sm,
     },
     qrButtonText: {

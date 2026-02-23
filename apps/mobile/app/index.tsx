@@ -1,5 +1,7 @@
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, Image } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useScrollHeader } from '../src/hooks/useScrollHeader';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAccount, useEnsName } from 'wagmi';
@@ -7,7 +9,7 @@ import { useBalanceStore } from '../src/stores/balance';
 import { useAuthStore } from '../src/stores/auth';
 import { useAuthPopoverStore } from '../src/stores/authPopover';
 import { useBrandStore } from '../src/stores/brand';
-import { spacing, useTheme } from '../src/theme';
+import { spacing, typography, useTheme } from '../src/theme';
 import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 import { cycleLanguage, LANGUAGE_LABELS, type Language } from '../src/i18n';
@@ -91,6 +93,10 @@ export default function BalancesScreen() {
     setLangLabel(LANGUAGE_LABELS[nextLang]);
   };
 
+  const { scrollHandler, headerAnimatedStyle } = useScrollHeader(120);
+
+  const AnimatedFlatList = Animated.FlatList;
+
   // Calculate total USD value from all revnets
   const totalCashOutUsd = revnets.reduce((sum, r) => sum + (r.cashOutValueUsd || 0), 0);
 
@@ -120,13 +126,13 @@ export default function BalancesScreen() {
     <PageContainer>
       <View style={styles.container}>
         {/* Total Balance */}
-        <View style={styles.totalCard}>
+        <Animated.View style={[styles.totalCard, headerAnimatedStyle]}>
           <View style={styles.labelRow}>
             <Text style={styles.coconutEmoji}>🥥</Text>
             <Text style={styles.totalLabel}>{t('home.yourBalance')}</Text>
           </View>
           <Text style={styles.totalAmount}>{formatUsdValue(totalCashOutUsd)}</Text>
-        </View>
+        </Animated.View>
 
         {/* Revnets List */}
         <View style={styles.storesSection}>
@@ -142,10 +148,12 @@ export default function BalancesScreen() {
               </Pressable>
             </View>
           ) : (
-            <FlatList
+            <AnimatedFlatList
               data={allItems}
               keyExtractor={(item) => `${item.chainId}-${item.projectId}-${item.name}`}
               contentContainerStyle={styles.list}
+              onScroll={scrollHandler}
+              scrollEventThrottle={16}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
@@ -206,56 +214,70 @@ export default function BalancesScreen() {
             {!isAuthenticated && !isWalletConnected && (
               <Pressable
                 ref={connectRef}
-                style={styles.signInButton}
+                style={styles.dockItem}
                 onPress={() => {
                   connectRef.current?.measureInWindow((x, y, w, h) => {
                     openAuthPopover({ x, y, width: w, height: h });
                   });
                 }}
               >
-                <Text style={styles.signInText}>{t('auth.connect')}</Text>
+                <Text style={styles.dockItemText}>{t('auth.connect')}</Text>
               </Pressable>
             )}
             {!isAuthenticated && isWalletConnected && (
-              <Pressable
-                ref={connectRef}
-                style={styles.connectedStatus}
-                onPress={() => {
-                  connectRef.current?.measureInWindow((x, y, w, h) => {
-                    openAuthPopover({ x, y, width: w, height: h });
-                    setAuthStep('wallet');
-                  });
-                }}
-              >
-                <Text style={styles.hollowCircle}>○</Text>
-                <Text style={styles.connectedText}>{walletLabel}</Text>
-              </Pressable>
+              <>
+                <Pressable
+                  ref={connectRef}
+                  style={styles.dockItem}
+                  onPress={() => {
+                    connectRef.current?.measureInWindow((x, y, w, h) => {
+                      openAuthPopover({ x, y, width: w, height: h });
+                      setAuthStep('wallet');
+                    });
+                  }}
+                >
+                  <Text style={styles.hollowCircle}>○</Text>
+                  <Text style={styles.connectedText}>{walletLabel}</Text>
+                </Pressable>
+                <Text style={styles.pipeSeparator}>|</Text>
+              </>
             )}
             {isAuthenticated && isWalletConnected && (
-              <Pressable
-                ref={connectRef}
-                style={styles.connectedStatus}
-                onPress={() => {
-                  connectRef.current?.measureInWindow((x, y, w, h) => {
-                    openAuthPopover({ x, y, width: w, height: h });
-                    setAuthStep('connected');
-                  });
-                }}
-              >
-                <Text style={styles.greenCircle}>●</Text>
-                <Text style={styles.connectedText}>{walletLabel}</Text>
-              </Pressable>
+              <>
+                <Pressable
+                  ref={connectRef}
+                  style={styles.dockItem}
+                  onPress={() => {
+                    connectRef.current?.measureInWindow((x, y, w, h) => {
+                      openAuthPopover({ x, y, width: w, height: h });
+                      setAuthStep('connected');
+                    });
+                  }}
+                >
+                  <Text style={styles.greenCircle}>●</Text>
+                  <Text style={styles.connectedText}>{walletLabel}</Text>
+                </Pressable>
+                <Text style={styles.pipeSeparator}>|</Text>
+              </>
             )}
 
-            <Pressable onPress={handleCycleLanguage} style={styles.langButton}>
-              <Text style={styles.langButtonText}>{langLabel}</Text>
+            {!isAuthenticated && !isWalletConnected && (
+              <Text style={styles.pipeSeparator}>|</Text>
+            )}
+
+            <Pressable onPress={handleCycleLanguage} style={styles.dockItem}>
+              <Text style={styles.dockItemText}>{langLabel}</Text>
             </Pressable>
 
-            <Pressable onPress={cycleBrand} style={styles.brandButton}>
-              <Text style={styles.brandButtonText}>○</Text>
+            <Text style={styles.pipeSeparator}>|</Text>
+
+            <Pressable onPress={cycleBrand} style={styles.dockItem}>
+              <Text style={styles.dockItemText}>○</Text>
             </Pressable>
 
-            <Pressable onPress={handleCreateStore} style={styles.coconutButton}>
+            <Text style={styles.pipeSeparator}>|</Text>
+
+            <Pressable onPress={handleCreateStore} style={styles.dockItem}>
               <Text style={styles.coconutBottom}>🥥</Text>
             </Pressable>
           </View>
@@ -341,7 +363,7 @@ function useStyles(t: BrandTheme) {
     },
     list: {
       paddingHorizontal: spacing[4],
-      paddingBottom: spacing[20],
+      paddingBottom: 120,
     },
     storeRow: {
       flexDirection: 'row',
@@ -430,37 +452,34 @@ function useStyles(t: BrandTheme) {
       alignItems: 'center',
       padding: spacing[4],
       paddingBottom: spacing[8],
-      minHeight: 101,
-      borderTopWidth: 1,
-      borderTopColor: t.colors.border,
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: t.colors.backgroundTranslucent,
     },
     dockLeft: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: spacing[3],
+      gap: spacing[2],
     },
-    signInButton: {
-      borderWidth: 1,
-      borderColor: t.colors.borderHover,
-      paddingVertical: spacing[2],
-      paddingHorizontal: spacing[3],
-      justifyContent: 'center',
+    dockItem: {
+      flexDirection: 'row',
       alignItems: 'center',
-      minHeight: 52,
-      borderRadius: t.borderRadius.sm,
+      gap: spacing[1],
+      paddingVertical: spacing[1],
+      paddingHorizontal: spacing[1],
     },
-    signInText: {
+    dockItemText: {
       fontFamily: t.typography.fontFamily,
       fontSize: t.typography.sizes.sm,
       color: t.colors.textMuted,
     },
-    connectedStatus: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing[2],
-      paddingVertical: spacing[2],
-      paddingHorizontal: spacing[3],
-      minHeight: 52,
+    pipeSeparator: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+      opacity: 0.4,
     },
     hollowCircle: {
       fontSize: 14,
@@ -475,40 +494,13 @@ function useStyles(t: BrandTheme) {
       fontSize: t.typography.sizes.xs,
       color: t.colors.textSecondary,
     },
-    langButton: {
-      paddingVertical: spacing[2],
-      paddingHorizontal: spacing[3],
-      borderWidth: 1,
-      borderColor: t.colors.borderHover,
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: 52,
-      borderRadius: t.borderRadius.sm,
-    },
-    langButtonText: {
-      fontFamily: t.typography.fontFamily,
-      fontSize: t.typography.sizes.sm,
-      color: t.colors.textMuted,
-    },
-    brandButton: {
-      paddingVertical: spacing[2],
-      paddingHorizontal: spacing[4],
-      borderWidth: 1,
-      borderColor: t.colors.borderHover,
-      borderRadius: t.borderRadius.sm,
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: 52,
-    },
-    brandButtonText: {
-      fontSize: 18,
-      color: t.colors.textMuted,
-    },
     payButton: {
       backgroundColor: t.colors.accent,
       paddingVertical: spacing[3],
       paddingHorizontal: spacing[6],
       alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 52,
       borderRadius: t.borderRadius.md,
     },
     payButtonPressed: {
@@ -520,14 +512,8 @@ function useStyles(t: BrandTheme) {
       fontSize: t.typography.sizes.xl,
       fontWeight: t.typography.weights.bold,
     },
-    coconutButton: {
-      borderWidth: 1,
-      borderColor: t.colors.borderHover,
-      padding: spacing[2],
-      borderRadius: t.borderRadius.sm,
-    },
     coconutBottom: {
-      fontSize: 24,
+      fontSize: 20,
     },
   }), [t.key]);
 }

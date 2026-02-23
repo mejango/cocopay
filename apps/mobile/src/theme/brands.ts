@@ -1,11 +1,19 @@
 import { Platform } from 'react-native';
 
+function hexToTranslucent(hex: string, opacity = 0.87): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${opacity})`;
+}
+
 export type BrandKey = (typeof BRAND_ORDER)[number];
 
 export interface BrandTheme {
   key: BrandKey;
   colors: {
     background: string;
+    backgroundTranslucent: string;
     backgroundSecondary: string;
     text: string;
     textSecondary: string;
@@ -81,6 +89,7 @@ const juice: BrandTheme = {
   key: 'juice',
   colors: {
     background: '#1a1a1a',
+    backgroundTranslucent: hexToTranslucent('#1a1a1a'),
     backgroundSecondary: '#2a2a2a',
     text: '#ffffff',
     textSecondary: '#9ca3af',
@@ -107,6 +116,7 @@ const vans: BrandTheme = {
   key: 'vans',
   colors: {
     background: '#0d0d0d',
+    backgroundTranslucent: hexToTranslucent('#0d0d0d'),
     backgroundSecondary: '#1a1a1a',
     text: '#ffffff',
     textSecondary: '#b0b0b0',
@@ -133,6 +143,7 @@ const nike: BrandTheme = {
   key: 'nike',
   colors: {
     background: '#111111',
+    backgroundTranslucent: hexToTranslucent('#111111'),
     backgroundSecondary: '#1e1e1e',
     text: '#ffffff',
     textSecondary: '#9ca3af',
@@ -159,6 +170,7 @@ const ibm: BrandTheme = {
   key: 'ibm',
   colors: {
     background: '#f4f4f4',
+    backgroundTranslucent: hexToTranslucent('#f4f4f4'),
     backgroundSecondary: '#ffffff',
     text: '#161616',
     textSecondary: '#525252',
@@ -185,6 +197,7 @@ const apple: BrandTheme = {
   key: 'apple',
   colors: {
     background: '#ffffff',
+    backgroundTranslucent: hexToTranslucent('#ffffff'),
     backgroundSecondary: '#f5f5f7',
     text: '#1d1d1f',
     textSecondary: '#6e6e73',
@@ -222,6 +235,7 @@ const aarp: BrandTheme = {
   key: 'aarp',
   colors: {
     background: '#fff8f0',
+    backgroundTranslucent: hexToTranslucent('#fff8f0'),
     backgroundSecondary: '#ffffff',
     text: '#1a1a1a',
     textSecondary: '#4a4a4a',

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useBalanceStore } from '../src/stores/balance';
 import { useAuthStore } from '../src/stores/auth';
 import { useAuthPopoverStore } from '../src/stores/authPopover';
-import { spacing, useTheme } from '../src/theme';
+import { spacing, typography, useTheme } from '../src/theme';
 import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 
@@ -266,7 +266,7 @@ function useStyles(t: BrandTheme) {
       paddingVertical: spacing[2],
     },
     backArrow: {
-      fontFamily: t.typography.fontFamily,
+      fontFamily: typography.fontFamily,
       color: t.colors.accent,
       fontSize: 32,
     },
@@ -354,7 +354,7 @@ function useStyles(t: BrandTheme) {
       paddingVertical: spacing[4],
       paddingHorizontal: spacing[6],
       borderWidth: 1,
-      borderColor: t.colors.borderHover,
+      borderColor: t.colors.border,
       borderRadius: t.borderRadius.md,
     },
     addressText: {
@@ -409,7 +409,7 @@ function useStyles(t: BrandTheme) {
       paddingVertical: spacing[1],
       paddingHorizontal: spacing[2],
       borderWidth: 1,
-      borderColor: t.colors.borderHover,
+      borderColor: t.colors.border,
       marginTop: spacing[2],
       borderRadius: t.borderRadius.sm,
     },
@@ -448,9 +448,11 @@ function useStyles(t: BrandTheme) {
       gap: spacing[3],
       padding: spacing[4],
       paddingBottom: spacing[8],
-      minHeight: 101,
-      borderTopWidth: 1,
-      borderTopColor: t.colors.border,
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: t.colors.backgroundTranslucent,
     },
     dockLeft: {
       flexDirection: 'row',
@@ -469,6 +471,8 @@ function useStyles(t: BrandTheme) {
       paddingVertical: spacing[3],
       paddingHorizontal: spacing[6],
       alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 52,
       borderRadius: t.borderRadius.md,
     },
     actionButtonPressed: {

@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Pressable, TextInput, Alert, Platform, ScrollVi
 import { useState, useEffect, useMemo } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { spacing, useTheme } from '../src/theme';
+import { spacing, typography, useTheme } from '../src/theme';
 import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 import { useBalanceStore } from '../src/stores/balance';
@@ -301,7 +301,7 @@ function useStyles(t: BrandTheme) {
     },
     scrollContentContainer: {
       paddingHorizontal: spacing[4],
-      paddingBottom: spacing[4],
+      paddingBottom: 120,
     },
     amountSection: {
       alignItems: 'center',
@@ -447,7 +447,7 @@ function useStyles(t: BrandTheme) {
       paddingVertical: spacing[2],
     },
     topBackArrow: {
-      fontFamily: t.typography.fontFamily,
+      fontFamily: typography.fontFamily,
       color: t.colors.accent,
       fontSize: 32,
     },
@@ -457,9 +457,11 @@ function useStyles(t: BrandTheme) {
       gap: spacing[3],
       padding: spacing[4],
       paddingBottom: spacing[8],
-      minHeight: 101,
-      borderTopWidth: 1,
-      borderTopColor: t.colors.border,
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: t.colors.backgroundTranslucent,
     },
     dockLeft: {
       flexDirection: 'row',
@@ -478,6 +480,8 @@ function useStyles(t: BrandTheme) {
       paddingVertical: spacing[3],
       paddingHorizontal: spacing[6],
       alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 52,
       borderRadius: t.borderRadius.md,
     },
     buttonPressed: {
