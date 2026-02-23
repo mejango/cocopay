@@ -71,7 +71,8 @@ CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
 # Production stage (last — Railway builds this by default)
 FROM base AS production
 
-ENV RAILS_ENV="production"
+ENV RAILS_ENV="production" \
+    BUNDLE_WITHOUT="development test"
 
 # Copy built artifacts
 COPY --from=build /app /app
