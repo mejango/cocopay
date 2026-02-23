@@ -541,6 +541,7 @@ function useStyles(t: BrandTheme) {
       flexDirection: 'row',
       alignItems: 'center',
       paddingBottom: spacing[3],
+      marginBottom: spacing[6],
       borderBottomWidth: 1,
       borderBottomColor: t.colors.border,
     },
