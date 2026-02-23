@@ -508,7 +508,7 @@ function useStyles(t: BrandTheme) {
     },
     createButtonText: {
       fontFamily: t.typography.fontFamily,
-      color: t.colors.background,
+      color: t.colors.accentText,
       fontSize: t.typography.sizes.xl,
       fontWeight: t.typography.weights.bold,
     },

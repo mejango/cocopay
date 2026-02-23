@@ -7,6 +7,14 @@ function hexToTranslucent(hex: string, opacity = 0.94): string {
   return `rgba(${r},${g},${b},${opacity})`;
 }
 
+function getContrastText(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#111111' : '#ffffff';
+}
+
 export type BrandKey = (typeof BRAND_ORDER)[number];
 
 export interface BrandTheme {
@@ -19,6 +27,7 @@ export interface BrandTheme {
     textSecondary: string;
     textMuted: string;
     accent: string;
+    accentText: string;
     accentSecondary: string;
     border: string;
     borderHover: string;
@@ -95,6 +104,7 @@ const juice: BrandTheme = {
     textSecondary: '#9ca3af',
     textMuted: '#6b7280',
     accent: '#5CEBDF',
+    accentText: getContrastText('#5CEBDF'),
     accentSecondary: '#F5A623',
     border: 'rgba(255, 255, 255, 0.1)',
     borderHover: 'rgba(255, 255, 255, 0.2)',
@@ -122,6 +132,7 @@ const vans: BrandTheme = {
     textSecondary: '#b0b0b0',
     textMuted: '#707070',
     accent: '#ffffff',
+    accentText: getContrastText('#ffffff'),
     accentSecondary: '#e63946',
     border: 'rgba(255, 255, 255, 0.1)',
     borderHover: 'rgba(255, 255, 255, 0.2)',
@@ -142,27 +153,28 @@ const vans: BrandTheme = {
 const nike: BrandTheme = {
   key: 'nike',
   colors: {
-    background: '#111111',
-    backgroundTranslucent: hexToTranslucent('#111111'),
-    backgroundSecondary: '#1e1e1e',
-    text: '#ffffff',
-    textSecondary: '#9ca3af',
-    textMuted: '#6b7280',
+    background: '#ffffff',
+    backgroundTranslucent: hexToTranslucent('#ffffff'),
+    backgroundSecondary: '#f5f5f5',
+    text: '#111111',
+    textSecondary: '#707070',
+    textMuted: '#999999',
     accent: '#CDFF00',
+    accentText: getContrastText('#CDFF00'),
     accentSecondary: '#FF6B35',
-    border: 'rgba(255, 255, 255, 0.1)',
-    borderHover: 'rgba(255, 255, 255, 0.2)',
-    card: '#1e1e1e',
-    cardBorder: 'rgba(255, 255, 255, 0.1)',
+    border: '#e5e5e5',
+    borderHover: '#cccccc',
+    card: '#f5f5f5',
+    cardBorder: '#e5e5e5',
     ...SHARED_SEMANTIC,
   },
   typography: {
-    fontFamily: Platform.select({ ios: 'HelveticaNeue', android: 'sans-serif', default: 'sans-serif' })!,
+    fontFamily: Platform.select({ ios: 'AvenirNextCondensed-Bold', android: 'sans-serif-condensed', default: 'sans-serif' })!,
     sizes: SHARED_SIZES,
     weights: SHARED_WEIGHTS,
   },
   borderRadius: { none: 0, sm: 4, md: 8, lg: 12, xl: 16, '2xl': 20, full: 9999 },
-  statusBarStyle: 'light',
+  statusBarStyle: 'dark',
 };
 
 // ── ibm: Corporate blue ──
@@ -176,6 +188,7 @@ const ibm: BrandTheme = {
     textSecondary: '#525252',
     textMuted: '#8d8d8d',
     accent: '#0f62fe',
+    accentText: getContrastText('#0f62fe'),
     accentSecondary: '#da1e28',
     border: '#e0e0e0',
     borderHover: '#c6c6c6',
@@ -184,7 +197,7 @@ const ibm: BrandTheme = {
     ...SHARED_SEMANTIC,
   },
   typography: {
-    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace', default: 'monospace' })!,
+    fontFamily: Platform.select({ ios: 'System', android: 'sans-serif', default: 'sans-serif' })!,
     sizes: SHARED_SIZES,
     weights: SHARED_WEIGHTS,
   },
@@ -203,6 +216,7 @@ const apple: BrandTheme = {
     textSecondary: '#6e6e73',
     textMuted: '#86868b',
     accent: '#0071E3',
+    accentText: getContrastText('#0071E3'),
     accentSecondary: '#86868b',
     border: '#d2d2d7',
     borderHover: '#b0b0b5',
@@ -241,6 +255,7 @@ const aarp: BrandTheme = {
     textSecondary: '#4a4a4a',
     textMuted: '#777777',
     accent: '#1565c0',
+    accentText: getContrastText('#1565c0'),
     accentSecondary: '#c62828',
     border: '#d4c5b5',
     borderHover: '#b8a898',

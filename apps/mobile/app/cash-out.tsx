@@ -271,7 +271,7 @@ function useStyles(t: BrandTheme) {
       fontFamily: t.typography.fontFamily,
       fontSize: t.typography.sizes.xs,
       fontWeight: t.typography.weights.bold,
-      color: t.colors.background,
+      color: t.colors.accentText,
     },
     conversionCard: {
       backgroundColor: t.colors.backgroundSecondary,
@@ -317,7 +317,7 @@ function useStyles(t: BrandTheme) {
     },
     cashOutButtonText: {
       fontFamily: t.typography.fontFamily,
-      color: t.colors.background,
+      color: t.colors.accentText,
       fontSize: t.typography.sizes.lg,
       fontWeight: t.typography.weights.bold,
     },

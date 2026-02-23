@@ -200,7 +200,7 @@ function useStyles(t: BrandTheme) {
       borderRadius: t.borderRadius.full,
       backgroundColor: t.colors.backgroundSecondary,
       borderWidth: 1,
-      borderColor: t.colors.borderHover,
+      borderColor: t.colors.border,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: spacing[6],
@@ -234,7 +234,7 @@ function useStyles(t: BrandTheme) {
     },
     primaryButtonText: {
       fontFamily: t.typography.fontFamily,
-      color: t.colors.background,
+      color: t.colors.accentText,
       fontSize: t.typography.sizes.sm,
       fontWeight: t.typography.weights.semibold,
     },
@@ -254,7 +254,7 @@ function useStyles(t: BrandTheme) {
     },
     avatarText: {
       fontFamily: t.typography.fontFamily,
-      color: t.colors.background,
+      color: t.colors.accentText,
       fontSize: t.typography.sizes['3xl'],
       fontWeight: t.typography.weights.bold,
     },

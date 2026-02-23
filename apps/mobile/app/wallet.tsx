@@ -485,7 +485,7 @@ function useStyles(t: BrandTheme) {
     },
     actionButtonText: {
       fontFamily: t.typography.fontFamily,
-      color: t.colors.background,
+      color: t.colors.accentText,
       fontSize: t.typography.sizes.xl,
       fontWeight: t.typography.weights.bold,
     },

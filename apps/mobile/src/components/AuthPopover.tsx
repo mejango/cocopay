@@ -1,5 +1,5 @@
-import { View, Text, TextInput, StyleSheet, Pressable, Alert, Platform, ActivityIndicator, useWindowDimensions } from 'react-native';
-import { useState, useMemo, useCallback } from 'react';
+import { View, Text, TextInput, StyleSheet, Pressable, Alert, Platform, ActivityIndicator, Keyboard, useWindowDimensions } from 'react-native';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useConnect, useAccount, useSignMessage, useDisconnect, useEnsName } from 'wagmi';
@@ -404,7 +404,23 @@ export function AuthPopover() {
   const styles = useStyles(theme);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, (e) => setKeyboardHeight(e.endCoordinates.height));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
+
   const positionStyle = useMemo(() => {
+    if (keyboardHeight > 0) {
+      return {
+        bottom: keyboardHeight + spacing[2],
+        left: (screenWidth - POPOVER_WIDTH) / 2,
+      };
+    }
+
     if (!anchor) {
       return {
         top: screenHeight * 0.3,
@@ -430,7 +446,7 @@ export function AuthPopover() {
       bottom: screenHeight - anchor.y + spacing[2],
       left,
     };
-  }, [anchor, screenWidth, screenHeight]);
+  }, [anchor, screenWidth, screenHeight, keyboardHeight]);
 
   if (step === 'closed') return null;
 
