@@ -313,6 +313,9 @@ function useStyles(t: BrandTheme) {
       paddingHorizontal: spacing[4],
       justifyContent: 'center',
       alignItems: 'center',
+      maxWidth: 480,
+      alignSelf: 'center',
+      width: '100%',
     },
     tabContainer: {
       flexDirection: 'row',
