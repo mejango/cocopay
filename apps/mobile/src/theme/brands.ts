@@ -197,7 +197,7 @@ const ibm: BrandTheme = {
     ...SHARED_SEMANTIC,
   },
   typography: {
-    fontFamily: Platform.select({ ios: 'System', android: 'sans-serif', default: 'sans-serif' })!,
+    fontFamily: Platform.select({ ios: 'Helvetica Neue', android: 'sans-serif', default: "'Helvetica Neue', Helvetica, Arial, sans-serif" })!,
     sizes: SHARED_SIZES,
     weights: SHARED_WEIGHTS,
   },
@@ -225,7 +225,7 @@ const apple: BrandTheme = {
     ...SHARED_SEMANTIC,
   },
   typography: {
-    fontFamily: Platform.select({ ios: 'System', android: 'sans-serif', default: 'sans-serif' })!,
+    fontFamily: Platform.select({ ios: 'System', android: 'sans-serif', default: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" })!,
     sizes: SHARED_SIZES,
     weights: SHARED_WEIGHTS,
   },

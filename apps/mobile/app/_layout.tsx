@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../src/i18n';
 import { useAuthStore } from '../src/stores/auth';
@@ -39,6 +40,14 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
 
 function ThemedStack() {
   const theme = useTheme();
+
+  // Sync theme-color meta tag and body background for mobile browsers (notch area)
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme.colors.background);
+    document.body.style.backgroundColor = theme.colors.background;
+  }, [theme.colors.background]);
 
   return (
     <>
