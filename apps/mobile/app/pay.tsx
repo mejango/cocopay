@@ -166,7 +166,7 @@ function useStyles(t: BrandTheme) {
     },
     topBackArrow: {
       fontFamily: typography.fontFamily,
-      color: t.colors.accent,
+      color: t.colors.text,
       fontSize: 32,
     },
     bottomContainer: {

@@ -177,11 +177,28 @@ export default {
     yourPayments: '您的支付',
     networkVolume: '网络交易量',
     cashOut: '提现',
+    charge: '收款',
+    chargeComingSoon: '收款发票即将推出！',
     spend: '支付',
     spendHere: '在此支付',
     today: '今天',
     all: '全部',
     payments: '{{count}} 次支付',
+  },
+  // Charge screen
+  charge: {
+    enterAmount: '收款金额',
+    generate: '生成',
+    linkCopied: '链接已复制！',
+    share: '分享',
+    newCharge: '新收款',
+    scanToPay: '扫码支付',
+  },
+  // Cash-out popover
+  cashOutPopover: {
+    amount: '金额',
+    max: '最大',
+    usdValue: '≈ ${{value}} USDC',
   },
   // Common
   common: {

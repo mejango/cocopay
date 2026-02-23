@@ -61,8 +61,9 @@ function distributeAmount(
 }
 
 export default function PaymentScreen() {
-  const params = useLocalSearchParams<{ storeId: string; storeName: string; storeLogo: string }>();
-  const { revnets, walletAddress } = useBalanceStore();
+  const params = useLocalSearchParams<{ storeId: string; storeName: string; storeLogo: string; amount: string }>();
+  const revnets = useBalanceStore((s) => s.revnets);
+  const walletAddress = useBalanceStore((s) => s.walletAddress);
   const payableTokens = revnetsToPayableTokens(revnets);
   const { t } = useTranslation();
   const theme = useTheme();
@@ -70,7 +71,7 @@ export default function PaymentScreen() {
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
 
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(params.amount || '');
   const [isLoading, setIsLoading] = useState(false);
   const [tokenAmounts, setTokenAmounts] = useState<Record<string, string>>({});
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -448,7 +449,7 @@ function useStyles(t: BrandTheme) {
     },
     topBackArrow: {
       fontFamily: typography.fontFamily,
-      color: t.colors.accent,
+      color: t.colors.text,
       fontSize: 32,
     },
     bottomContainer: {

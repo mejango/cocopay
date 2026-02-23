@@ -177,11 +177,28 @@ export default {
     yourPayments: 'SEUS PAGAMENTOS',
     networkVolume: 'VOLUME DA REDE',
     cashOut: 'Sacar',
+    charge: 'Cobrar',
+    chargeComingSoon: 'Cobranças em breve!',
     spend: 'Pagar',
     spendHere: 'Pagar Aqui',
     today: 'Hoje',
     all: 'Tudo',
     payments: '{{count}} pagamentos',
+  },
+  // Charge screen
+  charge: {
+    enterAmount: 'VALOR A COBRAR',
+    generate: 'Gerar',
+    linkCopied: 'Link copiado!',
+    share: 'Compartilhar',
+    newCharge: 'Nova Cobrança',
+    scanToPay: 'Escaneie para pagar',
+  },
+  // Cash-out popover
+  cashOutPopover: {
+    amount: 'QUANTIDADE',
+    max: 'MAX',
+    usdValue: '≈ ${{value}} USDC',
   },
   // Common
   common: {

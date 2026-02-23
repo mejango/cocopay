@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireAuth } from '../../src/hooks/useRequireAuth';
+import { useCashOutPopoverStore } from '../../src/stores/cashOutPopover';
 import { spacing, typography, useTheme } from '../../src/theme';
 import type { BrandTheme } from '../../src/theme';
 import { PageContainer } from '../../src/components/PageContainer';
@@ -155,7 +156,8 @@ export default function RevnetDetailScreen() {
     cashOutValueUsd: string;
   }>();
   const { requireAuth } = useRequireAuth();
-  const cashOutRef = useRef<View>(null);
+  const cashOutMenuRef = useRef<View>(null);
+  const openCashOutPopover = useCashOutPopoverStore((s) => s.open);
   const walletAddress = useBalanceStore((state) => state.walletAddress);
   const { t } = useTranslation();
   const theme = useTheme();
@@ -170,7 +172,6 @@ export default function RevnetDetailScreen() {
   const [paymentsGraph, setPaymentsGraph] = useState<GraphData>({ values: [], labels: [] });
   const [volumeGraph, setVolumeGraph] = useState<GraphData>({ values: [], labels: [] });
   const [timeRange, setTimeRange] = useState<TimeRange>('1m');
-  const [menuExpanded, setMenuExpanded] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
@@ -281,23 +282,49 @@ export default function RevnetDetailScreen() {
     loadVolumeTimeline();
   }, [projectId, chainId, timeRange, projectStats?.volumeUsd, projectStats?.tokenSymbol]);
 
-  const handleCashOut = () => {
-    cashOutRef.current?.measureInWindow((x, y, w, h) => {
-      if (!requireAuth({ type: 'action', action: 'cash_out' }, { x, y, width: w, height: h })) {
+  // Compute range label for graph x-axis start
+  const rangeLabel = useMemo(() => {
+    if (timeRange === 'all') {
+      // Use first bucket label from loaded graph data as the start reference
+      const firstLabel = volumeGraph.labels[0] || balanceGraph.labels[0] || paymentsGraph.labels[0];
+      if (firstLabel) {
+        // For range labels like "10 Feb - 17 Feb", extract the start part
+        const parts = firstLabel.split(' - ');
+        return parts[0];
+      }
+      return t('store.all');
+    }
+    switch (timeRange) {
+      case '1m': return '30d';
+      case '3m': return '3m';
+      case '6m': return '6m';
+      case '1y': return '1y';
+      default: return '30d';
+    }
+  }, [timeRange, volumeGraph.labels, balanceGraph.labels, paymentsGraph.labels, t]);
+
+  const handleCashOutMenu = () => {
+    cashOutMenuRef.current?.measureInWindow((x, y, w, h) => {
+      const anchor = { x, y, width: w, height: h };
+      if (!requireAuth({ type: 'action', action: 'cash_out' }, anchor)) {
         return;
       }
-      router.push({
-        pathname: '/cash-out',
-        params: {
-          storeId: params.id,
-          storeName: params.name,
-          balance: params.balance,
-          tokenSymbol: params.tokenSymbol,
-          chainId: params.chainId,
-          projectId: params.projectId,
-          rawBalance: params.rawBalance,
-        },
+      openCashOutPopover(anchor, {
+        storeName: params.name || '',
+        balance: params.balance || '0',
+        tokenSymbol: params.tokenSymbol || 'TOKEN',
+        chainId: params.chainId || '1',
+        projectId: params.projectId || '0',
+        rawBalance: params.rawBalance || '0',
+        cashOutValueUsd: params.cashOutValueUsd || '0',
       });
+    });
+  };
+
+  const handleCharge = () => {
+    router.push({
+      pathname: '/charge',
+      params: { storeId: params.id, storeName: params.name, storeLogo: params.logoUri || '', tokenSymbol: params.tokenSymbol || '' },
     });
   };
 
@@ -389,13 +416,21 @@ export default function RevnetDetailScreen() {
             labels={volumeGraph.labels}
             color={'rgba(167, 139, 250, 0.7)'}
             isLoading={isVolumeLoading}
+            rangeLabel={rangeLabel}
             formatValue={formatVolumeWithTotal}
           />
         </View>
 
         {/* SEU SALDO - Cash out value in USD */}
         <View style={styles.statSection}>
-          <Text style={styles.statLabel}>{t('store.yourBalance')}</Text>
+          <View style={styles.volumeHeader}>
+            <Text style={styles.statLabel}>{t('store.yourBalance')}</Text>
+            {hasBalance && (
+              <Pressable ref={cashOutMenuRef} onPress={handleCashOutMenu} hitSlop={8}>
+                <Text style={styles.menuDots}>⋮</Text>
+              </Pressable>
+            )}
+          </View>
           {isLoading ? (
             <View style={styles.loadingValue}>
               <ActivityIndicator color={'#f472b6'} size="small" />
@@ -412,6 +447,7 @@ export default function RevnetDetailScreen() {
             labels={balanceGraph.labels}
             color={'rgba(244, 114, 182, 0.7)'}
             isLoading={isBalanceLoading}
+            rangeLabel={rangeLabel}
             formatValue={formatBalance}
           />
         </View>
@@ -435,6 +471,7 @@ export default function RevnetDetailScreen() {
             labels={paymentsGraph.labels}
             color={'rgba(255, 255, 255, 0.7)'}
             isLoading={isPaymentsLoading}
+            rangeLabel={rangeLabel}
             formatValue={formatPayments}
           />
         </View>
@@ -452,42 +489,15 @@ export default function RevnetDetailScreen() {
 
         <View style={styles.dockSpacer} />
 
-        {hasBalance && (
-          menuExpanded ? (
-            <Pressable
-              ref={cashOutRef}
-              style={({ pressed }) => [
-                styles.button,
-                styles.qrButton,
-                pressed && styles.buttonPressed,
-              ]}
-              onPress={handleCashOut}
-            >
-              <Text style={styles.qrButtonText}>{t('store.cashOut')}</Text>
-            </Pressable>
-          ) : (
-            <Pressable
-              style={({ pressed }) => [
-                styles.button,
-                styles.qrButton,
-                pressed && styles.buttonPressed,
-              ]}
-              onPress={() => setMenuExpanded(true)}
-            >
-              <Text style={styles.qrButtonText}>⋮</Text>
-            </Pressable>
-          )
-        )}
-
         <Pressable
           style={({ pressed }) => [
             styles.button,
             styles.qrButton,
             pressed && styles.buttonPressed,
           ]}
-          onPress={() => router.push('/pay')}
+          onPress={handleCharge}
         >
-          <Text style={styles.qrButtonText}>QR</Text>
+          <Text style={styles.qrButtonText}>{t('store.charge')}</Text>
         </Pressable>
 
         <Pressable
@@ -546,7 +556,7 @@ function useStyles(t: BrandTheme) {
     },
     topBackArrow: {
       fontFamily: typography.fontFamily,
-      color: t.colors.accent,
+      color: t.colors.text,
       fontSize: 32,
     },
     headerName: {
@@ -676,6 +686,12 @@ function useStyles(t: BrandTheme) {
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: spacing[1],
+    },
+    menuDots: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      color: t.colors.textSecondary,
+      paddingHorizontal: spacing[2],
     },
     timeRangeContainer: {
       flexDirection: 'row',

@@ -2,13 +2,14 @@ import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../src/i18n';
 import { useAuthStore } from '../src/stores/auth';
 import { useBrandStore } from '../src/stores/brand';
 import { AuthPopover } from '../src/components/AuthPopover';
+import { CashOutPopover } from '../src/components/CashOutPopover';
 import { useTheme } from '../src/theme';
 import { wagmiConfig } from '../src/config/wagmi';
 
@@ -22,14 +23,12 @@ const queryClient = new QueryClient({
 });
 
 function AuthCheck({ children }: { children: React.ReactNode }) {
-  const checkAuth = useAuthStore((state) => state.checkAuth);
   const isLoading = useAuthStore((state) => state.isLoading);
-  const loadStored = useBrandStore((state) => state.loadStored);
 
   useEffect(() => {
-    checkAuth();
-    loadStored();
-  }, [checkAuth, loadStored]);
+    useAuthStore.getState().checkAuth();
+    useBrandStore.getState().loadStored();
+  }, []);
 
   if (isLoading) {
     return null; // Or a loading screen
@@ -40,23 +39,24 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
 
 function ThemedStack() {
   const theme = useTheme();
+  const background = theme.colors.background;
 
   // Sync theme-color meta tag and body background for mobile browsers (notch area)
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme.colors.background);
-    document.body.style.backgroundColor = theme.colors.background;
-  }, [theme.colors.background]);
+    if (meta) meta.setAttribute('content', background);
+    document.body.style.backgroundColor = background;
+  }, [background]);
+
+  const screenOptions = useMemo(() => ({
+    headerShown: false,
+    contentStyle: { backgroundColor: background },
+  }), [background]);
 
   return (
     <>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: theme.colors.background },
-        }}
-      >
+      <Stack screenOptions={screenOptions}>
         {/* Main landing screen */}
         <Stack.Screen name="index" />
 
@@ -97,9 +97,16 @@ function ThemedStack() {
             presentation: 'modal',
           }}
         />
+        <Stack.Screen
+          name="charge"
+          options={{
+            presentation: 'modal',
+          }}
+        />
 
       </Stack>
       <AuthPopover />
+      <CashOutPopover />
       <StatusBar style={theme.statusBarStyle} />
     </>
   );

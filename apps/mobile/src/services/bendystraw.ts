@@ -910,7 +910,16 @@ export function generatePaymentsGraphData(
   days: number = 30
 ): GraphData {
   const now = Date.now();
-  const startMs = now - days * 24 * 60 * 60 * 1000;
+  let startMs = now - days * 24 * 60 * 60 * 1000;
+  let effectiveDays = days;
+
+  // For "all time" mode, start from earliest event
+  if (days >= 3650 && events.length > 0) {
+    const earliestTs = Math.min(...events.map(e => e.timestamp)) * 1000;
+    startMs = earliestTs;
+    effectiveDays = Math.max(1, Math.ceil((now - startMs) / (24 * 60 * 60 * 1000)));
+  }
+
   const interval = (now - startMs) / buckets;
 
   const labels: string[] = [];
@@ -930,7 +939,7 @@ export function generatePaymentsGraphData(
   for (let i = 0; i < buckets; i++) {
     const bucketStart = startMs + interval * i;
     const bucketEnd = startMs + interval * (i + 1);
-    labels.push(formatDateRange(bucketStart, bucketEnd, days));
+    labels.push(formatDateRange(bucketStart, bucketEnd, effectiveDays));
 
     // Count events in this bucket and add to cumulative
     for (const event of events) {
@@ -967,12 +976,15 @@ export interface TimelineData {
 function formatDateRange(startMs: number, endMs: number, days: number): string {
   const start = new Date(startMs);
   const end = new Date(endMs);
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-  const formatDate = (d: Date) => {
-    const day = d.getDate();
-    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    return `${day} ${months[d.getMonth()]}`;
-  };
+  // For ranges over a year, show month + year abbreviation
+  if (days > 365) {
+    const yr = end.getFullYear().toString().slice(-2);
+    return `${months[end.getMonth()]} '${yr}`;
+  }
+
+  const formatDate = (d: Date) => `${d.getDate()} ${months[d.getMonth()]}`;
 
   // For short ranges (< 7 days per bucket), show single date
   const bucketDays = days / 10;
@@ -1052,7 +1064,18 @@ export async function fetchProjectTimeline(
     // Show DELTA volume (new volume in each period) for meaningful visualization
     const points = 10;
     const now = Date.now();
-    const startMs = startTimestamp * 1000;
+
+    // For "all time" mode, start from earliest moment instead of fixed offset
+    let startMs: number;
+    let effectiveDays: number;
+    if (days >= 3650 && moments.length > 0) {
+      startMs = moments[0].timestamp * 1000;
+      effectiveDays = Math.max(1, Math.ceil((now - startMs) / (24 * 60 * 60 * 1000)));
+    } else {
+      startMs = startTimestamp * 1000;
+      effectiveDays = days;
+    }
+
     const interval = (now - startMs) / points;
 
     // Find the first moment to use as fallback for early time buckets
@@ -1067,7 +1090,7 @@ export async function fetchProjectTimeline(
       const bucketEnd = startMs + interval * (i + 1);
 
       // Generate label for this time bucket
-      labels.push(formatDateRange(bucketStart, bucketEnd, days));
+      labels.push(formatDateRange(bucketStart, bucketEnd, effectiveDays));
 
       // Find the closest moment at or before this time
       let closest = firstMoment;
@@ -1146,7 +1169,18 @@ export async function fetchBalanceHistory(
     // Convert to 10 evenly-spaced data points
     const points = 10;
     const now = Date.now();
-    const startMs = startTimestamp * 1000;
+
+    // For "all time" mode, start from earliest snapshot
+    let startMs: number;
+    let effectiveDays: number;
+    if (days >= 3650 && snapshots.length > 0) {
+      startMs = snapshots[0].timestamp * 1000;
+      effectiveDays = Math.max(1, Math.ceil((now - startMs) / (24 * 60 * 60 * 1000)));
+    } else {
+      startMs = startTimestamp * 1000;
+      effectiveDays = days;
+    }
+
     const interval = (now - startMs) / points;
 
     const values: number[] = [];
@@ -1158,7 +1192,7 @@ export async function fetchBalanceHistory(
         for (let i = 0; i < points; i++) {
           const bucketStart = startMs + interval * i;
           const bucketEnd = startMs + interval * (i + 1);
-          labels.push(formatDateRange(bucketStart, bucketEnd, days));
+          labels.push(formatDateRange(bucketStart, bucketEnd, effectiveDays));
           values.push(currentBalance);
         }
         return { values, labels };
@@ -1177,7 +1211,7 @@ export async function fetchBalanceHistory(
     for (let i = 0; i < points; i++) {
       const bucketStart = startMs + interval * i;
       const bucketEnd = startMs + interval * (i + 1);
-      labels.push(formatDateRange(bucketStart, bucketEnd, days));
+      labels.push(formatDateRange(bucketStart, bucketEnd, effectiveDays));
 
       // Find the most recent snapshot at or before this bucket's end
       for (const s of snapshots) {

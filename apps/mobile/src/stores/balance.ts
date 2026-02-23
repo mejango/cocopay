@@ -21,7 +21,9 @@ export const useBalanceStore = create<BalanceState>((set, get) => ({
   error: null,
 
   setWalletAddress: (address: string) => {
-    set({ walletAddress: address });
+    if (address !== get().walletAddress) {
+      set({ walletAddress: address });
+    }
   },
 
   fetch: async () => {

@@ -109,7 +109,7 @@ function EmailStep() {
         disabled={isLoading}
       >
         {isLoading ? (
-          <ActivityIndicator color={theme.colors.accent} size="small" />
+          <ActivityIndicator color={theme.colors.accentText} size="small" />
         ) : (
           <Text style={styles.primaryButtonText}>{t('auth.sendCode')}</Text>
         )}
@@ -203,7 +203,7 @@ function VerifyStep() {
         disabled={isLoading}
       >
         {isLoading ? (
-          <ActivityIndicator color={theme.colors.accent} size="small" />
+          <ActivityIndicator color={theme.colors.accentText} size="small" />
         ) : (
           <Text style={styles.primaryButtonText}>{t('verify.verify')}</Text>
         )}
@@ -345,7 +345,7 @@ function WalletStep() {
           >
             {isLoading ? (
               <View style={styles.loadingRow}>
-                <ActivityIndicator color={theme.colors.accent} size="small" />
+                <ActivityIndicator color={theme.colors.accentText} size="small" />
                 {status ? <Text style={styles.statusText}>{status}</Text> : null}
               </View>
             ) : (
@@ -413,7 +413,20 @@ export function AuthPopover() {
     return () => { showSub.remove(); hideSub.remove(); };
   }, []);
 
+  const isMobile = screenWidth < 600;
+
   const positionStyle = useMemo(() => {
+    // Mobile: full-width bottom sheet
+    if (isMobile) {
+      return {
+        bottom: keyboardHeight > 0 ? keyboardHeight : 0,
+        left: 0,
+        right: 0,
+        width: undefined as unknown as number,
+      };
+    }
+
+    // Desktop: anchor-based popover
     if (keyboardHeight > 0) {
       return {
         bottom: keyboardHeight + spacing[2],
@@ -446,14 +459,14 @@ export function AuthPopover() {
       bottom: screenHeight - anchor.y + spacing[2],
       left,
     };
-  }, [anchor, screenWidth, screenHeight, keyboardHeight]);
+  }, [anchor, screenWidth, screenHeight, keyboardHeight, isMobile]);
 
   if (step === 'closed') return null;
 
   return (
     <>
       <Pressable style={styles.backdrop} onPress={close} />
-      <View style={[styles.popoverBox, positionStyle]}>
+      <View style={[styles.popoverBox, isMobile && styles.popoverBoxMobile, positionStyle]}>
         {step === 'choose' && <ChooseStep />}
         {step === 'email' && <EmailStep />}
         {step === 'verify' && <VerifyStep />}
@@ -486,6 +499,16 @@ function useStyles(t: BrandTheme) {
       shadowOpacity: 0.6,
       shadowRadius: 16,
       elevation: 8,
+    },
+    popoverBoxMobile: {
+      width: '100%',
+      borderRadius: 0,
+      borderTopLeftRadius: t.borderRadius.lg,
+      borderTopRightRadius: t.borderRadius.lg,
+      borderLeftWidth: 0,
+      borderRightWidth: 0,
+      borderBottomWidth: 0,
+      paddingBottom: spacing[8],
     },
     header: {
       flexDirection: 'row',
@@ -525,9 +548,7 @@ function useStyles(t: BrandTheme) {
     },
     primaryButton: {
       flex: 1,
-      borderWidth: 1,
-      borderColor: t.colors.accent,
-      backgroundColor: 'transparent',
+      backgroundColor: t.colors.accent,
       paddingVertical: spacing[1.5],
       paddingHorizontal: spacing[3],
       alignItems: 'center',
@@ -538,7 +559,7 @@ function useStyles(t: BrandTheme) {
     primaryButtonText: {
       fontFamily: t.typography.fontFamily,
       fontSize: t.typography.sizes.sm,
-      color: t.colors.accent,
+      color: t.colors.accentText,
       fontWeight: t.typography.weights.medium,
     },
     secondaryButton: {
@@ -630,7 +651,7 @@ function useStyles(t: BrandTheme) {
     statusText: {
       fontFamily: t.typography.fontFamily,
       fontSize: t.typography.sizes.xs,
-      color: t.colors.accent,
+      color: t.colors.accentText,
     },
   }), [t.key]);
 }

@@ -339,7 +339,7 @@ function useStyles(t: BrandTheme) {
     },
     topBackArrow: {
       fontFamily: typography.fontFamily,
-      color: t.colors.accent,
+      color: t.colors.text,
       fontSize: 32,
     },
     content: {
@@ -382,19 +382,16 @@ function useStyles(t: BrandTheme) {
       marginBottom: spacing[8],
     },
     logoPicker: {
-      flexDirection: 'row',
-      alignItems: 'center',
       marginBottom: spacing[6],
-      gap: spacing[4],
     },
     logoImage: {
-      width: 80,
-      height: 80,
+      width: '100%',
+      height: 56,
       borderRadius: t.borderRadius.sm,
     },
     logoPlaceholder: {
-      width: 80,
-      height: 80,
+      width: '100%',
+      height: 56,
       borderRadius: t.borderRadius.sm,
       backgroundColor: t.colors.backgroundSecondary,
       borderWidth: 2,

@@ -20,7 +20,7 @@ export default function CashOutScreen() {
     rawBalance: string;
   }>();
 
-  const { walletAddress } = useBalanceStore();
+  const walletAddress = useBalanceStore((s) => s.walletAddress);
   const { t } = useTranslation();
   const theme = useTheme();
   const styles = useStyles(theme);
@@ -175,7 +175,7 @@ function useStyles(t: BrandTheme) {
     },
     backArrow: {
       fontFamily: t.typography.fontFamily,
-      color: t.colors.accent,
+      color: t.colors.text,
       fontSize: 32,
       fontWeight: t.typography.weights.medium,
     },

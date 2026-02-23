@@ -177,11 +177,28 @@ export default {
     yourPayments: 'YOUR PAYMENTS',
     networkVolume: 'NETWORK VOLUME',
     cashOut: 'Cash Out',
+    charge: 'Charge',
+    chargeComingSoon: 'Charge invoices coming soon!',
     spend: 'Pay',
     spendHere: 'Pay Here',
     today: 'Today',
     all: 'All',
     payments: '{{count}} payments',
+  },
+  // Charge screen
+  charge: {
+    enterAmount: 'AMOUNT TO CHARGE',
+    generate: 'Generate',
+    linkCopied: 'Link copied!',
+    share: 'Share',
+    newCharge: 'New Charge',
+    scanToPay: 'Scan to pay',
+  },
+  // Cash-out popover
+  cashOutPopover: {
+    amount: 'AMOUNT',
+    max: 'MAX',
+    usdValue: '≈ ${{value}} USDC',
   },
   // Common
   common: {

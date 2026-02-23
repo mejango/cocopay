@@ -13,7 +13,7 @@ const CHAINS = ['Arbitrum', 'Optimism', 'Ethereum', 'Base'];
 const USDC_LOGO = 'https://assets.coingecko.com/coins/images/6319/small/usdc.png';
 
 export default function WalletScreen() {
-  const { totalUsd } = useBalanceStore();
+  const totalUsd = useBalanceStore((s) => s.totalUsd);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const walletAddress = user?.deposit_address || '';
@@ -266,7 +266,7 @@ function useStyles(t: BrandTheme) {
     },
     backArrow: {
       fontFamily: typography.fontFamily,
-      color: t.colors.accent,
+      color: t.colors.text,
       fontSize: 32,
     },
     headerTitle: {
@@ -490,8 +490,7 @@ function useStyles(t: BrandTheme) {
       fontWeight: t.typography.weights.bold,
     },
     signInButton: {
-      borderWidth: 1,
-      borderColor: t.colors.accent,
+      backgroundColor: t.colors.accent,
       paddingVertical: spacing[3],
       paddingHorizontal: spacing[6],
       marginTop: spacing[4],
@@ -499,7 +498,7 @@ function useStyles(t: BrandTheme) {
     },
     signInButtonText: {
       fontFamily: t.typography.fontFamily,
-      color: t.colors.accent,
+      color: t.colors.accentText,
       fontSize: t.typography.sizes.sm,
       fontWeight: t.typography.weights.semibold,
     },

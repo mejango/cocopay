@@ -38,22 +38,25 @@ export default function BalancesScreen() {
 
   const walletLabel = ensName
     || (walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : '');
-  const { totalUsd, revnets, isLoading, error, fetch: fetchRevnets, setWalletAddress } = useBalanceStore();
+  const revnets = useBalanceStore((s) => s.revnets);
+  const isLoading = useBalanceStore((s) => s.isLoading);
+  const error = useBalanceStore((s) => s.error);
   const [refreshing, setRefreshing] = useState(false);
   const [langLabel, setLangLabel] = useState(LANGUAGE_LABELS[i18n.language as Language] || 'PT');
 
   useEffect(() => {
+    const store = useBalanceStore.getState();
     if (walletAddress) {
-      setWalletAddress(walletAddress);
+      store.setWalletAddress(walletAddress);
     }
-    fetchRevnets();
-  }, [walletAddress, setWalletAddress, fetchRevnets]);
+    store.fetch();
+  }, [walletAddress]);
 
   // Revnets already sorted by cash out value from the service
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchRevnets();
+    await useBalanceStore.getState().fetch();
     setRefreshing(false);
   };
 
@@ -83,7 +86,7 @@ export default function BalancesScreen() {
   };
 
   const handleWalletPress = () => {
-    router.push('/wallet');
+    router.push('/usdc');
   };
 
   const handleCycleLanguage = () => {
@@ -128,7 +131,7 @@ export default function BalancesScreen() {
           ) : error ? (
             <View style={styles.centered}>
               <Text style={styles.errorText}>{error}</Text>
-              <Pressable onPress={fetchRevnets} style={styles.retryButton}>
+              <Pressable onPress={() => useBalanceStore.getState().fetch()} style={styles.retryButton}>
                 <Text style={styles.retryText}>{t('home.retry')}</Text>
               </Pressable>
             </View>
@@ -296,7 +299,6 @@ function useStyles(t: BrandTheme) {
       backgroundColor: t.colors.background,
     },
     totalCard: {
-      paddingHorizontal: spacing[4],
       paddingTop: spacing[16],
       paddingBottom: spacing[6],
     },
