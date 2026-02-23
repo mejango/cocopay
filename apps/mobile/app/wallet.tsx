@@ -492,7 +492,7 @@ function useStyles(t: BrandTheme) {
     },
     signInButton: {
       borderWidth: 1,
-      borderColor: t.colors.success,
+      borderColor: t.colors.accent,
       paddingVertical: spacing[3],
       paddingHorizontal: spacing[6],
       marginTop: spacing[4],
@@ -500,7 +500,7 @@ function useStyles(t: BrandTheme) {
     },
     signInButtonText: {
       fontFamily: t.typography.fontFamily,
-      color: t.colors.success,
+      color: t.colors.accent,
       fontSize: t.typography.sizes.sm,
       fontWeight: t.typography.weights.semibold,
     },
