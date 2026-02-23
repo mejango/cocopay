@@ -1,7 +1,5 @@
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, Image } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useScrollHeader } from '../src/hooks/useScrollHeader';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAccount, useEnsName } from 'wagmi';
@@ -93,10 +91,6 @@ export default function BalancesScreen() {
     setLangLabel(LANGUAGE_LABELS[nextLang]);
   };
 
-  const { scrollHandler, headerAnimatedStyle } = useScrollHeader(120);
-
-  const AnimatedFlatList = Animated.FlatList;
-
   // Calculate total USD value from all revnets
   const totalCashOutUsd = revnets.reduce((sum, r) => sum + (r.cashOutValueUsd || 0), 0);
 
@@ -125,16 +119,7 @@ export default function BalancesScreen() {
   return (
     <PageContainer>
       <View style={styles.container}>
-        {/* Total Balance */}
-        <Animated.View style={[styles.totalCard, headerAnimatedStyle]}>
-          <View style={styles.labelRow}>
-            <Text style={styles.coconutEmoji}>🥥</Text>
-            <Text style={styles.totalLabel}>{t('home.yourBalance')}</Text>
-          </View>
-          <Text style={styles.totalAmount}>{formatUsdValue(totalCashOutUsd)}</Text>
-        </Animated.View>
-
-        {/* Revnets List */}
+        {/* Revnets List with header */}
         <View style={styles.storesSection}>
           {isLoading && revnets.length === 0 ? (
             <View style={styles.centered}>
@@ -148,12 +133,19 @@ export default function BalancesScreen() {
               </Pressable>
             </View>
           ) : (
-            <AnimatedFlatList
+            <FlatList
               data={allItems}
               keyExtractor={(item) => `${item.chainId}-${item.projectId}-${item.name}`}
               contentContainerStyle={styles.list}
-              onScroll={scrollHandler}
-              scrollEventThrottle={16}
+              ListHeaderComponent={
+                <View style={styles.totalCard}>
+                  <View style={styles.labelRow}>
+                    <Text style={styles.coconutEmoji}>🥥</Text>
+                    <Text style={styles.totalLabel}>{t('home.yourBalance')}</Text>
+                  </View>
+                  <Text style={styles.totalAmount}>{formatUsdValue(totalCashOutUsd)}</Text>
+                </View>
+              }
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
@@ -332,7 +324,6 @@ function useStyles(t: BrandTheme) {
     },
     storesSection: {
       flex: 1,
-      marginTop: spacing[4],
     },
     centered: {
       flex: 1,

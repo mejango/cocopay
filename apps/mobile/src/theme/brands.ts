@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-function hexToTranslucent(hex: string, opacity = 0.87): string {
+function hexToTranslucent(hex: string, opacity = 0.94): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);

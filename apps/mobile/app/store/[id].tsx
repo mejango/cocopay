@@ -1,7 +1,5 @@
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Image, useWindowDimensions } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useScrollHeader } from '../../src/hooks/useScrollHeader';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireAuth } from '../../src/hooks/useRequireAuth';
@@ -164,7 +162,6 @@ export default function RevnetDetailScreen() {
   const styles = useStyles(theme);
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
-  const { scrollHandler, headerAnimatedStyle } = useScrollHeader(60);
 
   const [projectStats, setProjectStats] = useState<ProjectStats | null>(null);
 
@@ -360,7 +357,9 @@ export default function RevnetDetailScreen() {
             </Pressable>
           </View>
         )}
-        <Animated.View style={[styles.headerRow, isMobile && styles.headerRowMobile, headerAnimatedStyle]}>
+        {/* Content */}
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        <View style={[styles.headerRow, isMobile && styles.headerRowMobile]}>
           {params.logoUri ? (
             <Image source={{ uri: params.logoUri }} style={styles.headerLogo} />
           ) : null}
@@ -368,10 +367,7 @@ export default function RevnetDetailScreen() {
             <Text style={styles.headerName}>{params.name}</Text>
             <Text style={styles.headerToken}>{tokenSymbol}</Text>
           </View>
-        </Animated.View>
-
-        {/* Content */}
-        <Animated.ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} onScroll={scrollHandler} scrollEventThrottle={16}>
+        </View>
         {/* VOLUME DA REDE - moved to top */}
         <View style={styles.statSection}>
           <View style={styles.volumeHeader}>
@@ -458,7 +454,7 @@ export default function RevnetDetailScreen() {
             formatValue={formatPayments}
           />
         </View>
-      </Animated.ScrollView>
+      </ScrollView>
 
       {/* Bottom Buttons */}
       <View style={styles.buttonContainer}>
