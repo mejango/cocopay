@@ -108,7 +108,6 @@ export default function WalletScreen() {
           <Image source={{ uri: USDC_LOGO }} style={styles.headerLogo} />
           <View style={styles.headerTextColumn}>
             <Text style={styles.headerName}>USDC</Text>
-            <Text style={styles.headerSubtitle}>{t('wallet.title')}</Text>
           </View>
           <View style={styles.tabContainer}>
             <Pressable
