@@ -540,7 +540,6 @@ function useStyles(t: BrandTheme) {
     headerRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: spacing[4],
       paddingBottom: spacing[3],
       borderBottomWidth: 1,
       borderBottomColor: t.colors.border,
