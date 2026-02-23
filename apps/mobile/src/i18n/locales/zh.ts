@@ -142,7 +142,7 @@ export default {
   // Create store screen
   createStore: {
     title: '创建商店',
-    tagline: 'CocoPay 是社区商业支付系统。为什么加入？',
+    tagline: 'CocoPay 是社区商业支付系统。\n为什么加入？',
     benefit1: '每家商店都有自己的数字美元，在支付真实美元时创建',
     benefit2: '从邻里其他商店接收美元',
     benefit3: '客户帮助推广您的品牌可获得 5% 返现',

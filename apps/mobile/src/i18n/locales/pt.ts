@@ -142,7 +142,7 @@ export default {
   // Create store screen
   createStore: {
     title: 'Criar Loja',
-    tagline: 'CocoPay é pagamentos para comercio comunitario. Por que entrar?',
+    tagline: 'CocoPay é pagamentos para comercio comunitario.\nPor que entrar?',
     benefit1: 'Cada loja tem seu próprio dolar digital, criado quando pago dolares reais',
     benefit2: 'Receba dolars de outras lojas do bairro',
     benefit3: 'Clientes ganham 5% de volta quando ajudam crescer sua marca',

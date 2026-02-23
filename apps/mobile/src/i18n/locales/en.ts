@@ -142,7 +142,7 @@ export default {
   // Create store screen
   createStore: {
     title: 'Create store or service',
-    tagline: 'CocoPay is payments for community commerce. Why join?',
+    tagline: 'CocoPay is payments for community commerce.\nWhy join?',
     benefit1: 'Every store has its own digital dollar, made when paid real dollars',
     benefit2: 'Receive dollars from other neighborhood stores',
     benefit3: 'Customers get 5% back when they help grow your brand',
