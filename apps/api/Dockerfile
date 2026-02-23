@@ -22,15 +22,19 @@ RUN apt-get update -qq && \
 # Build stage
 FROM base AS build
 
-# Install packages needed to build gems
+# Install packages needed to build gems (autoconf/automake/libtool for rbsecp256k1)
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
     build-essential \
     git \
     pkg-config \
+    autoconf \
+    automake \
+    libtool \
     && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install gems
+# Install gems (skip dev/test for production)
+ENV BUNDLE_WITHOUT="development test"
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
