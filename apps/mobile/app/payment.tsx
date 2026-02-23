@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, Pressable, TextInput, Alert, Platform, ScrollView, useWindowDimensions, Image } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { colors, typography, spacing } from '../src/theme';
+import { spacing, useTheme } from '../src/theme';
+import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 import { useBalanceStore } from '../src/stores/balance';
 import { buildPayTransaction, formatTransactionForDisplay } from '../src/services/terminal';
@@ -64,6 +65,8 @@ export default function PaymentScreen() {
   const { revnets, walletAddress } = useBalanceStore();
   const payableTokens = revnetsToPayableTokens(revnets);
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
 
@@ -187,7 +190,7 @@ export default function PaymentScreen() {
               value={amount ? `$${amount}` : ''}
               onChangeText={(text) => setAmount(text.replace(/^\$/, ''))}
               placeholder="$0.00"
-              placeholderTextColor={colors.gray500}
+              placeholderTextColor={theme.colors.textMuted}
               keyboardType="decimal-pad"
               editable={!isLoading}
             />
@@ -287,203 +290,207 @@ export default function PaymentScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.juiceDark,
-  },
-  scrollContent: {
-    flex: 1,
-  },
-  scrollContentContainer: {
-    paddingHorizontal: spacing[4],
-    paddingBottom: spacing[4],
-  },
-  amountSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 400,
-    paddingVertical: spacing[8],
-  },
-  amountInput: {
-    fontFamily: typography.fontFamily,
-    fontSize: 72,
-    fontWeight: typography.weights.bold,
-    color: colors.juiceCyan,
-    padding: 0,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-    textAlign: 'center',
-    marginBottom: spacing[3],
-  } as any,
-  storeLogo: {
-    width: 96,
-    height: 96,
-    marginBottom: spacing[6],
-  },
-  storeName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.bold,
-    color: colors.gray400,
-    letterSpacing: 2,
-    marginBottom: spacing[3],
-    textTransform: 'uppercase',
-  },
-  tokenSection: {
-    paddingBottom: spacing[4],
-  },
-  tokenSectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing[2],
-  },
-  tokenSectionLabel: {
-    fontFamily: typography.fontFamily,
-    color: colors.gray400,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.bold,
-    letterSpacing: 2,
-  },
-  tokenSectionTotal: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceCyan,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.bold,
-  },
-  tokenSectionTotalWarning: {
-    color: colors.juiceOrange,
-  },
-  noTokens: {
-    paddingVertical: spacing[6],
-    alignItems: 'center',
-  },
-  noTokensText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.base,
-    color: colors.gray400,
-    fontWeight: typography.weights.semibold,
-  },
-  noTokensSubtext: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-    marginTop: spacing[2],
-    textAlign: 'center',
-  },
-  tokenRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[3],
-    marginBottom: spacing[2],
-    backgroundColor: colors.juiceDarkLighter,
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha10,
-  },
-  tokenRowSelected: {
-    borderColor: colors.juiceOrange,
-    backgroundColor: 'rgba(245, 166, 35, 0.1)',
-  },
-  tokenLogo: {
-    width: 32,
-    height: 32,
-    marginRight: spacing[2],
-  },
-  tokenInfo: {
-    flex: 1,
-  },
-  tokenShort: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.bold,
-    color: colors.gray400,
-  },
-  tokenShortSelected: {
-    color: colors.juiceOrange,
-  },
-  tokenName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray500,
-    marginTop: spacing[0.5],
-  },
-  tokenBalance: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.gray500,
-  },
-  tokenAmountDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tokenAmountValue: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.juiceOrange,
-  },
-  tokenMaxLabel: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-    marginLeft: spacing[1],
-  },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[4],
-  },
-  topBackButton: {
-    paddingVertical: spacing[2],
-  },
-  topBackArrow: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceCyan,
-    fontSize: 32,
-  },
-  bottomContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    padding: spacing[4],
-    paddingBottom: spacing[8],
-    minHeight: 101,
-    borderTopWidth: 1,
-    borderTopColor: colors.whiteAlpha10,
-  },
-  dockLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-  },
-  dockSpacer: {
-    flex: 1,
-  },
-  bottomBackButton: {
-    paddingVertical: spacing[2],
-    paddingRight: spacing[2],
-  },
-  payButton: {
-    backgroundColor: colors.juiceCyan,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[6],
-    alignItems: 'center',
-  },
-  buttonPressed: {
-    opacity: 0.9,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  payButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceDark,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-  },
-});
+function useStyles(t: BrandTheme) {
+  return useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    scrollContent: {
+      flex: 1,
+    },
+    scrollContentContainer: {
+      paddingHorizontal: spacing[4],
+      paddingBottom: spacing[4],
+    },
+    amountSection: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 400,
+      paddingVertical: spacing[8],
+    },
+    amountInput: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: 72,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.accent,
+      padding: 0,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+      textAlign: 'center',
+      marginBottom: spacing[3],
+    } as any,
+    storeLogo: {
+      width: 96,
+      height: 96,
+      marginBottom: spacing[6],
+    },
+    storeName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.textSecondary,
+      letterSpacing: 2,
+      marginBottom: spacing[3],
+      textTransform: 'uppercase',
+    },
+    tokenSection: {
+      paddingBottom: spacing[4],
+    },
+    tokenSectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[2],
+    },
+    tokenSectionLabel: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.textSecondary,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.bold,
+      letterSpacing: 2,
+    },
+    tokenSectionTotal: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.accent,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.bold,
+    },
+    tokenSectionTotalWarning: {
+      color: t.colors.accentSecondary,
+    },
+    noTokens: {
+      paddingVertical: spacing[6],
+      alignItems: 'center',
+    },
+    noTokensText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.base,
+      color: t.colors.textSecondary,
+      fontWeight: t.typography.weights.semibold,
+    },
+    noTokensSubtext: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+      marginTop: spacing[2],
+      textAlign: 'center',
+    },
+    tokenRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[3],
+      marginBottom: spacing[2],
+      backgroundColor: t.colors.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      borderRadius: t.borderRadius.sm,
+    },
+    tokenRowSelected: {
+      borderColor: t.colors.accentSecondary,
+      backgroundColor: `${t.colors.accentSecondary}1A`,
+    },
+    tokenLogo: {
+      width: 32,
+      height: 32,
+      marginRight: spacing[2],
+    },
+    tokenInfo: {
+      flex: 1,
+    },
+    tokenShort: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.base,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.textSecondary,
+    },
+    tokenShortSelected: {
+      color: t.colors.accentSecondary,
+    },
+    tokenName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+      marginTop: spacing[0.5],
+    },
+    tokenBalance: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.textMuted,
+    },
+    tokenAmountDisplay: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    tokenAmountValue: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.accentSecondary,
+    },
+    tokenMaxLabel: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+      marginLeft: spacing[1],
+    },
+    topBar: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      paddingHorizontal: spacing[4],
+      paddingTop: spacing[4],
+    },
+    topBackButton: {
+      paddingVertical: spacing[2],
+    },
+    topBackArrow: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.accent,
+      fontSize: 32,
+    },
+    bottomContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+      padding: spacing[4],
+      paddingBottom: spacing[8],
+      minHeight: 101,
+      borderTopWidth: 1,
+      borderTopColor: t.colors.border,
+    },
+    dockLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+    },
+    dockSpacer: {
+      flex: 1,
+    },
+    bottomBackButton: {
+      paddingVertical: spacing[2],
+      paddingRight: spacing[2],
+    },
+    payButton: {
+      backgroundColor: t.colors.accent,
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[6],
+      alignItems: 'center',
+      borderRadius: t.borderRadius.md,
+    },
+    buttonPressed: {
+      opacity: 0.9,
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+    payButtonText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.background,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
+    },
+  }), [t.key]);
+}

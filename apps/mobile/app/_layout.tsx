@@ -6,8 +6,9 @@ import { useEffect } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../src/i18n';
 import { useAuthStore } from '../src/stores/auth';
+import { useBrandStore } from '../src/stores/brand';
 import { AuthPopover } from '../src/components/AuthPopover';
-import { colors } from '../src/theme';
+import { useTheme } from '../src/theme';
 import { wagmiConfig } from '../src/config/wagmi';
 
 const queryClient = new QueryClient({
@@ -22,10 +23,12 @@ const queryClient = new QueryClient({
 function AuthCheck({ children }: { children: React.ReactNode }) {
   const checkAuth = useAuthStore((state) => state.checkAuth);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const loadStored = useBrandStore((state) => state.loadStored);
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+    loadStored();
+  }, [checkAuth, loadStored]);
 
   if (isLoading) {
     return null; // Or a loading screen
@@ -34,62 +37,72 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ThemedStack() {
+  const theme = useTheme();
+
+  return (
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: theme.colors.background },
+        }}
+      >
+        {/* Main landing screen */}
+        <Stack.Screen name="index" />
+
+        {/* Modal screens */}
+        <Stack.Screen
+          name="store"
+          options={{
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="pay"
+          options={{
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="profile"
+          options={{
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="create-store"
+          options={{
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="cash-out"
+          options={{
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="payment"
+          options={{
+            presentation: 'modal',
+          }}
+        />
+
+      </Stack>
+      <AuthPopover />
+      <StatusBar style={theme.statusBarStyle} />
+    </>
+  );
+}
+
 export default function RootLayout() {
   return (
     <I18nextProvider i18n={i18n}>
     <WagmiProvider config={wagmiConfig}>
     <QueryClientProvider client={queryClient}>
       <AuthCheck>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.juiceDark },
-          }}
-        >
-          {/* Main landing screen */}
-          <Stack.Screen name="index" />
-
-          {/* Modal screens */}
-          <Stack.Screen
-            name="store"
-            options={{
-              presentation: 'modal',
-            }}
-          />
-          <Stack.Screen
-            name="pay"
-            options={{
-              presentation: 'modal',
-            }}
-          />
-          <Stack.Screen
-            name="profile"
-            options={{
-              presentation: 'modal',
-            }}
-          />
-          <Stack.Screen
-            name="create-store"
-            options={{
-              presentation: 'modal',
-            }}
-          />
-          <Stack.Screen
-            name="cash-out"
-            options={{
-              presentation: 'modal',
-            }}
-          />
-          <Stack.Screen
-            name="payment"
-            options={{
-              presentation: 'modal',
-            }}
-          />
-
-        </Stack>
-        <AuthPopover />
-        <StatusBar style="light" />
+        <ThemedStack />
       </AuthCheck>
     </QueryClientProvider>
     </WagmiProvider>

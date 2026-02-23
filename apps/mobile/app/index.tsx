@@ -1,12 +1,14 @@
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, Image } from 'react-native';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAccount, useEnsName } from 'wagmi';
 import { useBalanceStore } from '../src/stores/balance';
 import { useAuthStore } from '../src/stores/auth';
 import { useAuthPopoverStore } from '../src/stores/authPopover';
-import { colors, typography, spacing, borderRadius, shadows } from '../src/theme';
+import { useBrandStore } from '../src/stores/brand';
+import { spacing, useTheme } from '../src/theme';
+import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 import { cycleLanguage, LANGUAGE_LABELS, type Language } from '../src/i18n';
 import type { Revnet } from '../src/types/revnet';
@@ -24,9 +26,12 @@ function formatUsdValue(value: number): string {
 
 export default function BalancesScreen() {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const openAuthPopover = useAuthPopoverStore((state) => state.open);
   const setAuthStep = useAuthPopoverStore((state) => state.setStep);
+  const cycleBrand = useBrandStore((state) => state.cycleBrand);
   const { address: walletAddress, isConnected: isWalletConnected } = useAccount();
   const { data: ensName } = useEnsName({ address: walletAddress });
   const connectRef = useRef<View>(null);
@@ -145,7 +150,7 @@ export default function BalancesScreen() {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={onRefresh}
-                  tintColor={colors.juiceCyan}
+                  tintColor={theme.colors.accent}
                 />
               }
               renderItem={({ item }) => {
@@ -246,6 +251,10 @@ export default function BalancesScreen() {
               <Text style={styles.langButtonText}>{langLabel}</Text>
             </Pressable>
 
+            <Pressable onPress={cycleBrand} style={styles.brandButton}>
+              <Text style={styles.brandButtonText}>○</Text>
+            </Pressable>
+
             <Pressable onPress={handleCreateStore} style={styles.coconutButton}>
               <Text style={styles.coconutBottom}>🥥</Text>
             </Pressable>
@@ -266,239 +275,259 @@ export default function BalancesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.juiceDark,
-  },
-  totalCard: {
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[16],
-    paddingBottom: spacing[6],
-  },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-  },
-  totalLabel: {
-    fontFamily: typography.fontFamily,
-    color: colors.gray400,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.bold,
-    letterSpacing: 2,
-  },
-  coconutEmoji: {
-    fontSize: 24,
-  },
-  totalAmount: {
-    fontFamily: typography.fontFamily,
-    color: colors.white,
-    fontSize: 48,
-    fontWeight: typography.weights.bold,
-    marginTop: spacing[1],
-  },
-  storesSection: {
-    flex: 1,
-    marginTop: spacing[4],
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing[4],
-  },
-  loadingText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray400,
-  },
-  errorText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.juiceOrange,
-    textAlign: 'center',
-    marginBottom: spacing[4],
-  },
-  retryButton: {
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[4],
-  },
-  retryText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.juiceCyan,
-  },
-  list: {
-    paddingHorizontal: spacing[4],
-    paddingBottom: spacing[20],
-  },
-  storeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.whiteAlpha10,
-  },
-  storeRowPressed: {
-    backgroundColor: colors.whiteAlpha10,
-    marginHorizontal: -spacing[4],
-    paddingHorizontal: spacing[4],
-  },
-  storeLogo: {
-    width: 48,
-    height: 48,
-    borderRadius: 0,
-    marginRight: spacing[4],
-    backgroundColor: colors.juiceDarkLighter,
-  },
-  storeLogoPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 0,
-    marginRight: spacing[4],
-    backgroundColor: colors.whiteAlpha10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoInitial: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.gray400,
-  },
-  cashOutValue: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.gray500,
-    marginBottom: spacing[1],
-  },
-  cashOutValueActive: {
-    color: '#4ade80',
-  },
-  nameColumn: {
-    flex: 1,
-  },
-  storeName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.white,
-  },
-  tokenSymbol: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray500,
-    marginTop: spacing[0.5],
-  },
-  chevron: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xl,
-    color: colors.gray500,
-    marginLeft: spacing[2],
-  },
-  empty: {
-    padding: spacing[10],
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontFamily: typography.fontFamily,
-    color: colors.gray400,
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
-  },
-  emptySubtext: {
-    fontFamily: typography.fontFamily,
-    color: colors.gray500,
-    fontSize: typography.sizes.sm,
-    marginTop: spacing[2],
-  },
-  payButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing[4],
-    paddingBottom: spacing[8],
-    minHeight: 101,
-    borderTopWidth: 1,
-    borderTopColor: colors.whiteAlpha10,
-  },
-  dockLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-  },
-  signInButton: {
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 52,
-  },
-  signInText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-  },
-  connectedStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
-    minHeight: 52,
-  },
-  hollowCircle: {
-    fontSize: 14,
-    color: colors.gray400,
-  },
-  greenCircle: {
-    fontSize: 14,
-    color: colors.success,
-  },
-  connectedText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray400,
-  },
-  langButton: {
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 52,
-  },
-  langButtonText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-  },
-  payButton: {
-    backgroundColor: colors.juiceCyan,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[6],
-    alignItems: 'center',
-  },
-  payButtonPressed: {
-    opacity: 0.9,
-  },
-  payButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceDark,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-  },
-  coconutButton: {
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-    padding: spacing[2],
-  },
-  coconutBottom: {
-    fontSize: 24,
-  },
-});
+function useStyles(t: BrandTheme) {
+  return useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    totalCard: {
+      paddingHorizontal: spacing[4],
+      paddingTop: spacing[16],
+      paddingBottom: spacing[6],
+    },
+    labelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[2],
+    },
+    totalLabel: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.textSecondary,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.bold,
+      letterSpacing: 2,
+    },
+    coconutEmoji: {
+      fontSize: 24,
+    },
+    totalAmount: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.text,
+      fontSize: 48,
+      fontWeight: t.typography.weights.bold,
+      marginTop: spacing[1],
+    },
+    storesSection: {
+      flex: 1,
+      marginTop: spacing[4],
+    },
+    centered: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing[4],
+    },
+    loadingText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textSecondary,
+    },
+    errorText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.accentSecondary,
+      textAlign: 'center',
+      marginBottom: spacing[4],
+    },
+    retryButton: {
+      paddingVertical: spacing[2],
+      paddingHorizontal: spacing[4],
+    },
+    retryText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.accent,
+    },
+    list: {
+      paddingHorizontal: spacing[4],
+      paddingBottom: spacing[20],
+    },
+    storeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: spacing[4],
+      borderBottomWidth: 1,
+      borderBottomColor: t.colors.border,
+    },
+    storeRowPressed: {
+      backgroundColor: t.colors.border,
+      marginHorizontal: -spacing[4],
+      paddingHorizontal: spacing[4],
+    },
+    storeLogo: {
+      width: 48,
+      height: 48,
+      borderRadius: t.borderRadius.sm,
+      marginRight: spacing[4],
+      backgroundColor: t.colors.backgroundSecondary,
+    },
+    storeLogoPlaceholder: {
+      width: 48,
+      height: 48,
+      borderRadius: t.borderRadius.sm,
+      marginRight: spacing[4],
+      backgroundColor: t.colors.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    logoInitial: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.textSecondary,
+    },
+    cashOutValue: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.textMuted,
+      marginBottom: spacing[1],
+    },
+    cashOutValueActive: {
+      color: '#4ade80',
+    },
+    nameColumn: {
+      flex: 1,
+    },
+    storeName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.semibold,
+      color: t.colors.text,
+    },
+    tokenSymbol: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+      marginTop: spacing[0.5],
+    },
+    chevron: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xl,
+      color: t.colors.textMuted,
+      marginLeft: spacing[2],
+    },
+    empty: {
+      padding: spacing[10],
+      alignItems: 'center',
+    },
+    emptyText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.textSecondary,
+      fontSize: t.typography.sizes.base,
+      fontWeight: t.typography.weights.semibold,
+    },
+    emptySubtext: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.textMuted,
+      fontSize: t.typography.sizes.sm,
+      marginTop: spacing[2],
+    },
+    payButtonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: spacing[4],
+      paddingBottom: spacing[8],
+      minHeight: 101,
+      borderTopWidth: 1,
+      borderTopColor: t.colors.border,
+    },
+    dockLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+    },
+    signInButton: {
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      paddingVertical: spacing[2],
+      paddingHorizontal: spacing[3],
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: 52,
+      borderRadius: t.borderRadius.sm,
+    },
+    signInText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+    },
+    connectedStatus: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[2],
+      paddingVertical: spacing[2],
+      paddingHorizontal: spacing[3],
+      minHeight: 52,
+    },
+    hollowCircle: {
+      fontSize: 14,
+      color: t.colors.textSecondary,
+    },
+    greenCircle: {
+      fontSize: 14,
+      color: t.colors.success,
+    },
+    connectedText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textSecondary,
+    },
+    langButton: {
+      paddingVertical: spacing[2],
+      paddingHorizontal: spacing[3],
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: 52,
+      borderRadius: t.borderRadius.sm,
+    },
+    langButtonText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+    },
+    brandButton: {
+      paddingVertical: spacing[2],
+      paddingHorizontal: spacing[4],
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      borderRadius: t.borderRadius.sm,
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: 52,
+    },
+    brandButtonText: {
+      fontSize: 18,
+      color: t.colors.textMuted,
+    },
+    payButton: {
+      backgroundColor: t.colors.accent,
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[6],
+      alignItems: 'center',
+      borderRadius: t.borderRadius.md,
+    },
+    payButtonPressed: {
+      opacity: 0.9,
+    },
+    payButtonText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.background,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
+    },
+    coconutButton: {
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      padding: spacing[2],
+      borderRadius: t.borderRadius.sm,
+    },
+    coconutBottom: {
+      fontSize: 24,
+    },
+  }), [t.key]);
+}

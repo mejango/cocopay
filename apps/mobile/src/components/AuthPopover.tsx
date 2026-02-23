@@ -8,7 +8,8 @@ import { useAuthStore } from '../stores/auth';
 import { usePendingActionStore } from '../stores/pendingAction';
 import { authApi } from '../api/auth';
 import { generateSiweMessage } from '../services/siwe';
-import { colors, typography, spacing } from '../theme';
+import { spacing, useTheme } from '../theme';
+import type { BrandTheme } from '../theme';
 
 const showAlert = (title: string, message: string) => {
   if (Platform.OS === 'web') {
@@ -20,6 +21,8 @@ const showAlert = (title: string, message: string) => {
 
 function ChooseStep() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const { setStep, close } = useAuthPopoverStore();
 
   return (
@@ -51,6 +54,8 @@ function ChooseStep() {
 
 function EmailStep() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const { setStep, setEmail, setVerificationId, close } = useAuthPopoverStore();
   const login = useAuthStore((state) => state.login);
   const [emailInput, setEmailInput] = useState('');
@@ -92,7 +97,7 @@ function EmailStep() {
         value={emailInput}
         onChangeText={setEmailInput}
         placeholder={t('auth.emailPlaceholder')}
-        placeholderTextColor={colors.gray500}
+        placeholderTextColor={theme.colors.textMuted}
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
@@ -104,7 +109,7 @@ function EmailStep() {
         disabled={isLoading}
       >
         {isLoading ? (
-          <ActivityIndicator color={colors.success} size="small" />
+          <ActivityIndicator color={theme.colors.success} size="small" />
         ) : (
           <Text style={styles.primaryButtonText}>{t('auth.sendCode')}</Text>
         )}
@@ -115,6 +120,8 @@ function EmailStep() {
 
 function VerifyStep() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const { email, verificationId, setStep, close } = useAuthPopoverStore();
   const verifyMagicLink = useAuthStore((state) => state.verifyMagicLink);
   const pendingAction = usePendingActionStore((state) => state.pendingAction);
@@ -185,7 +192,7 @@ function VerifyStep() {
         value={token}
         onChangeText={setToken}
         placeholder={t('verify.placeholder')}
-        placeholderTextColor={colors.gray500}
+        placeholderTextColor={theme.colors.textMuted}
         autoCapitalize="none"
         autoCorrect={false}
         editable={!isLoading}
@@ -196,7 +203,7 @@ function VerifyStep() {
         disabled={isLoading}
       >
         {isLoading ? (
-          <ActivityIndicator color={colors.success} size="small" />
+          <ActivityIndicator color={theme.colors.success} size="small" />
         ) : (
           <Text style={styles.primaryButtonText}>{t('verify.verify')}</Text>
         )}
@@ -207,6 +214,8 @@ function VerifyStep() {
 
 function WalletStep() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const { setStep, close } = useAuthPopoverStore();
   const loginWithSiwe = useAuthStore((state) => state.loginWithSiwe);
   const pendingAction = usePendingActionStore((state) => state.pendingAction);
@@ -336,7 +345,7 @@ function WalletStep() {
           >
             {isLoading ? (
               <View style={styles.loadingRow}>
-                <ActivityIndicator color={colors.success} size="small" />
+                <ActivityIndicator color={theme.colors.success} size="small" />
                 {status ? <Text style={styles.statusText}>{status}</Text> : null}
               </View>
             ) : (
@@ -351,6 +360,8 @@ function WalletStep() {
 
 function ConnectedStep() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const { close } = useAuthPopoverStore();
   const { address } = useAccount();
   const { data: ensName } = useEnsName({ address });
@@ -389,6 +400,8 @@ export function AuthPopover() {
   const step = useAuthPopoverStore((state) => state.step);
   const anchor = useAuthPopoverStore((state) => state.anchor);
   const close = useAuthPopoverStore((state) => state.close);
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const positionStyle = useMemo(() => {
@@ -435,166 +448,173 @@ export function AuthPopover() {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  popoverBox: {
-    position: 'absolute',
-    width: POPOVER_WIDTH,
-    padding: spacing[4],
-    backgroundColor: colors.juiceDark,
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing[2],
-  },
-  title: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.white,
-  },
-  closeButton: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray400,
-  },
-  closeOnly: {
-    alignSelf: 'flex-end',
-    marginBottom: spacing[1],
-  },
-  backText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray400,
-  },
-  subtitle: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray400,
-    marginBottom: spacing[4],
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing[3],
-  },
-  primaryButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.success,
-    backgroundColor: 'transparent',
-    paddingVertical: spacing[1.5],
-    paddingHorizontal: spacing[3],
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 36,
-  },
-  primaryButtonText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.success,
-    fontWeight: typography.weights.medium,
-  },
-  secondaryButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    backgroundColor: 'transparent',
-    paddingVertical: spacing[1.5],
-    paddingHorizontal: spacing[3],
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 36,
-  },
-  secondaryButtonText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray300,
-    fontWeight: typography.weights.medium,
-  },
-  buttonPressed: {
-    opacity: 0.7,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  fullWidth: {
-    flex: undefined,
-    width: '100%',
-  },
-  input: {
-    fontFamily: typography.fontFamily,
-    backgroundColor: colors.juiceDarkLighter,
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-    paddingVertical: spacing[2.5],
-    paddingHorizontal: spacing[3],
-    fontSize: typography.sizes.sm,
-    color: colors.white,
-    marginBottom: spacing[3],
-  },
-  connectorList: {
-    gap: spacing[2],
-  },
-  connectorButton: {
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-    backgroundColor: 'transparent',
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
-    alignItems: 'center',
-  },
-  connectorButtonText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.white,
-    fontWeight: typography.weights.medium,
-  },
-  walletConnectedAs: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.white,
-    flex: 1,
-  },
-  hintRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing[3],
-  },
-  walletSignHint: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray500,
-  },
-  disconnectLink: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray500,
-    textDecorationLine: 'underline',
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-  },
-  statusText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.success,
-  },
-});
+function useStyles(t: BrandTheme) {
+  return useMemo(() => StyleSheet.create({
+    backdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    popoverBox: {
+      position: 'absolute',
+      width: POPOVER_WIDTH,
+      padding: spacing[4],
+      backgroundColor: t.colors.background,
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      borderRadius: t.borderRadius.lg,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.6,
+      shadowRadius: 16,
+      elevation: 8,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[2],
+    },
+    title: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.semibold,
+      color: t.colors.text,
+    },
+    closeButton: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textSecondary,
+    },
+    closeOnly: {
+      alignSelf: 'flex-end',
+      marginBottom: spacing[1],
+    },
+    backText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textSecondary,
+    },
+    subtitle: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textSecondary,
+      marginBottom: spacing[4],
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      gap: spacing[3],
+    },
+    primaryButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: t.colors.success,
+      backgroundColor: 'transparent',
+      paddingVertical: spacing[1.5],
+      paddingHorizontal: spacing[3],
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 36,
+      borderRadius: t.borderRadius.sm,
+    },
+    primaryButtonText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.success,
+      fontWeight: t.typography.weights.medium,
+    },
+    secondaryButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      backgroundColor: 'transparent',
+      paddingVertical: spacing[1.5],
+      paddingHorizontal: spacing[3],
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 36,
+      borderRadius: t.borderRadius.sm,
+    },
+    secondaryButtonText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textSecondary,
+      fontWeight: t.typography.weights.medium,
+    },
+    buttonPressed: {
+      opacity: 0.7,
+    },
+    buttonDisabled: {
+      opacity: 0.5,
+    },
+    fullWidth: {
+      flex: undefined,
+      width: '100%',
+    },
+    input: {
+      fontFamily: t.typography.fontFamily,
+      backgroundColor: t.colors.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      borderRadius: t.borderRadius.sm,
+      paddingVertical: spacing[2.5],
+      paddingHorizontal: spacing[3],
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.text,
+      marginBottom: spacing[3],
+    },
+    connectorList: {
+      gap: spacing[2],
+    },
+    connectorButton: {
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      backgroundColor: 'transparent',
+      paddingVertical: spacing[2],
+      paddingHorizontal: spacing[3],
+      alignItems: 'center',
+      borderRadius: t.borderRadius.sm,
+    },
+    connectorButtonText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.text,
+      fontWeight: t.typography.weights.medium,
+    },
+    walletConnectedAs: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.text,
+      flex: 1,
+    },
+    hintRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[3],
+    },
+    walletSignHint: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+    },
+    disconnectLink: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+      textDecorationLine: 'underline',
+    },
+    loadingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[2],
+    },
+    statusText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.success,
+    },
+  }), [t.key]);
+}

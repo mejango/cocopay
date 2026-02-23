@@ -1,7 +1,9 @@
 import { View, Text, StyleSheet, ActivityIndicator, Pressable, Linking } from 'react-native';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getChainById } from '../constants/juicebox';
-import { colors, typography, spacing } from '../theme';
+import { spacing, useTheme } from '../theme';
+import type { BrandTheme } from '../theme';
 import type { ChainDeployState } from '../hooks/useDeployRevnet';
 
 interface DeployProgressProps {
@@ -11,6 +13,8 @@ interface DeployProgressProps {
 
 function ChainRow({ state, isSlow }: { state: ChainDeployState; isSlow: boolean }) {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const chain = getChainById(state.chainId);
   const chainName = chain?.name ?? `Chain ${state.chainId}`;
 
@@ -31,7 +35,7 @@ function ChainRow({ state, isSlow }: { state: ChainDeployState; isSlow: boolean 
       case 'submitted':
         return (
           <View style={styles.statusRow}>
-            <ActivityIndicator size="small" color={colors.juiceCyan} />
+            <ActivityIndicator size="small" color={theme.colors.accent} />
             <Text style={styles.statusCreating}>{t('createStore.chainSubmitted')}</Text>
           </View>
         );
@@ -53,12 +57,12 @@ function ChainRow({ state, isSlow }: { state: ChainDeployState; isSlow: boolean 
 
   const dotColor =
     state.status === 'confirmed'
-      ? colors.success
+      ? theme.colors.success
       : state.status === 'failed'
-        ? colors.danger
+        ? theme.colors.danger
         : state.status === 'submitted'
-          ? colors.juiceCyan
-          : colors.gray500;
+          ? theme.colors.accent
+          : theme.colors.textMuted;
 
   return (
     <View style={styles.chainRow}>
@@ -70,6 +74,9 @@ function ChainRow({ state, isSlow }: { state: ChainDeployState; isSlow: boolean 
 }
 
 export function DeployProgress({ chainStates, slowChainIds }: DeployProgressProps) {
+  const theme = useTheme();
+  const styles = useStyles(theme);
+
   return (
     <View style={styles.container}>
       {chainStates.map((state) => (
@@ -83,65 +90,68 @@ export function DeployProgress({ chainStates, slowChainIds }: DeployProgressProp
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: spacing[3],
-  },
-  chainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-    backgroundColor: colors.juiceDarkLighter,
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha10,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: spacing[3],
-  },
-  chainName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.base,
-    color: colors.white,
-    flex: 1,
-  },
-  statusContainer: {
-    alignItems: 'flex-end',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-  },
-  statusText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-  },
-  statusSlow: {
-    color: colors.warning,
-  },
-  statusCreating: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.juiceCyan,
-  },
-  statusDone: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.base,
-    color: colors.success,
-  },
-  statusFailed: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.danger,
-  },
-  viewLink: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.juiceCyan,
-  },
-});
+function useStyles(t: BrandTheme) {
+  return useMemo(() => StyleSheet.create({
+    container: {
+      gap: spacing[3],
+    },
+    chainRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[4],
+      backgroundColor: t.colors.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      borderRadius: t.borderRadius.sm,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: spacing[3],
+    },
+    chainName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.base,
+      color: t.colors.text,
+      flex: 1,
+    },
+    statusContainer: {
+      alignItems: 'flex-end',
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[2],
+    },
+    statusText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+    },
+    statusSlow: {
+      color: t.colors.warning,
+    },
+    statusCreating: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.accent,
+    },
+    statusDone: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.base,
+      color: t.colors.success,
+    },
+    statusFailed: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.danger,
+    },
+    viewLink: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.accent,
+    },
+  }), [t.key]);
+}

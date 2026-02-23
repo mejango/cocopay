@@ -1,11 +1,12 @@
 import { View, Text, StyleSheet, Pressable, TextInput, Alert, Platform, useWindowDimensions, Image } from 'react-native';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useBalanceStore } from '../src/stores/balance';
 import { useAuthStore } from '../src/stores/auth';
 import { useAuthPopoverStore } from '../src/stores/authPopover';
-import { colors, typography, spacing, shadows } from '../src/theme';
+import { spacing, useTheme } from '../src/theme';
+import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 
 const CHAINS = ['Arbitrum', 'Optimism', 'Ethereum', 'Base'];
@@ -17,6 +18,8 @@ export default function WalletScreen() {
   const user = useAuthStore((state) => state.user);
   const walletAddress = user?.deposit_address || '';
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
   const signInRef = useRef<View>(null);
@@ -74,14 +77,14 @@ export default function WalletScreen() {
 
   // Color-code every 6 characters of the address for readability
   const ADDRESS_COLORS = [
-    colors.white,
-    colors.gray300,
-    colors.white,
-    colors.gray300,
-    colors.white,
-    colors.gray300,
-    colors.white,
-    colors.gray300,
+    theme.colors.text,
+    theme.colors.textSecondary,
+    theme.colors.text,
+    theme.colors.textSecondary,
+    theme.colors.text,
+    theme.colors.textSecondary,
+    theme.colors.text,
+    theme.colors.textSecondary,
   ];
 
   const addressChunks = walletAddress
@@ -180,7 +183,7 @@ export default function WalletScreen() {
                   value={amount ? `$${amount}` : ''}
                   onChangeText={(text) => setAmount(text.replace(/^\$/, ''))}
                   placeholder="$0.00"
-                  placeholderTextColor={colors.gray500}
+                  placeholderTextColor={theme.colors.textMuted}
                   keyboardType="decimal-pad"
                   editable={!isLoading}
                   textAlign="center"
@@ -203,7 +206,7 @@ export default function WalletScreen() {
                   value={withdrawAddress}
                   onChangeText={setWithdrawAddress}
                   placeholder="0x..."
-                  placeholderTextColor={colors.gray500}
+                  placeholderTextColor={theme.colors.textMuted}
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!isLoading}
@@ -246,246 +249,253 @@ export default function WalletScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.juiceDark,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[4],
-    gap: spacing[3],
-  },
-  topBackButton: {
-    paddingVertical: spacing[2],
-  },
-  backArrow: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceCyan,
-    fontSize: 32,
-  },
-  headerTitle: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.white,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.whiteAlpha10,
-    paddingBottom: 0,
-  },
-  headerRowMobile: {
-    paddingTop: spacing[6],
-  },
-  headerLogo: {
-    width: 40,
-    height: 40,
-    marginRight: spacing[3],
-    marginBottom: spacing[3],
-  },
-  headerTextColumn: {
-    marginBottom: spacing[3],
-    marginRight: spacing[4],
-  },
-  headerName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.white,
-  },
-  headerSubtitle: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing[4],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    alignSelf: 'flex-end',
-  },
-  tab: {
-    paddingVertical: spacing[2.5],
-    paddingHorizontal: spacing[3],
-    marginBottom: -1,
-    borderBottomWidth: 1,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: {
-    borderBottomColor: colors.juiceCyan,
-  },
-  tabText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.gray500,
-  },
-  tabTextActive: {
-    color: colors.white,
-  },
-  // Deposit tab
-  depositSection: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  depositLabel: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray400,
-    letterSpacing: 1,
-    marginBottom: spacing[4],
-  },
-  addressDisplay: {
-    alignItems: 'center',
-    paddingVertical: spacing[4],
-    paddingHorizontal: spacing[6],
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-  },
-  addressText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.bold,
-    color: colors.white,
-    lineHeight: 22,
-  },
-  copyHint: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray500,
-    marginTop: spacing[2],
-  },
-  chainsText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray500,
-    marginTop: spacing[6],
-    textAlign: 'center',
-  },
-  // Withdraw tab
-  withdrawSection: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  availableLabel: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-    marginBottom: spacing[2],
-  },
-  amountWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[8],
-  },
-  amountInput: {
-    fontFamily: typography.fontFamily,
-    fontSize: 72,
-    fontWeight: typography.weights.bold,
-    color: colors.juiceCyan,
-    width: '100%',
-    padding: 0,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-    textAlign: 'center',
-  } as any,
-  maxButton: {
-    paddingVertical: spacing[1],
-    paddingHorizontal: spacing[2],
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-    marginTop: spacing[2],
-  },
-  maxButtonText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.bold,
-    color: colors.gray500,
-  },
-  addressInputSection: {
-    width: '100%',
-  },
-  fieldLabel: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.bold,
-    color: colors.gray400,
-    letterSpacing: 2,
-    marginBottom: spacing[2],
-  },
-  addressInput: {
-    fontFamily: typography.fontFamily,
-    backgroundColor: colors.juiceDarkLighter,
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha10,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-    fontSize: typography.sizes.sm,
-    color: colors.white,
-  } as any,
-  // Bottom dock
-  bottomContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    padding: spacing[4],
-    paddingBottom: spacing[8],
-    minHeight: 101,
-    borderTopWidth: 1,
-    borderTopColor: colors.whiteAlpha10,
-  },
-  dockLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-  },
-  dockSpacer: {
-    flex: 1,
-  },
-  bottomBackButton: {
-    paddingVertical: spacing[2],
-    paddingRight: spacing[2],
-  },
-  actionButton: {
-    backgroundColor: colors.juiceCyan,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[6],
-    alignItems: 'center',
-  },
-  actionButtonPressed: {
-    opacity: 0.9,
-  },
-  actionButtonDisabled: {
-    opacity: 0.6,
-  },
-  actionButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceDark,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-  },
-  signInButton: {
-    borderWidth: 1,
-    borderColor: colors.success,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[6],
-    marginTop: spacing[4],
-  },
-  signInButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.success,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-  },
-});
+function useStyles(t: BrandTheme) {
+  return useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing[4],
+      paddingTop: spacing[4],
+      gap: spacing[3],
+    },
+    topBackButton: {
+      paddingVertical: spacing[2],
+    },
+    backArrow: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.accent,
+      fontSize: 32,
+    },
+    headerTitle: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.semibold,
+      color: t.colors.text,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      paddingHorizontal: spacing[4],
+      borderBottomWidth: 1,
+      borderBottomColor: t.colors.border,
+      paddingBottom: 0,
+    },
+    headerRowMobile: {
+      paddingTop: spacing[6],
+    },
+    headerLogo: {
+      width: 40,
+      height: 40,
+      marginRight: spacing[3],
+      marginBottom: spacing[3],
+    },
+    headerTextColumn: {
+      marginBottom: spacing[3],
+      marginRight: spacing[4],
+    },
+    headerName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+    },
+    headerSubtitle: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+    },
+    content: {
+      flex: 1,
+      paddingHorizontal: spacing[4],
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    tabContainer: {
+      flexDirection: 'row',
+      alignSelf: 'flex-end',
+    },
+    tab: {
+      paddingVertical: spacing[2.5],
+      paddingHorizontal: spacing[3],
+      marginBottom: -1,
+      borderBottomWidth: 1,
+      borderBottomColor: 'transparent',
+    },
+    tabActive: {
+      borderBottomColor: t.colors.accent,
+    },
+    tabText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.semibold,
+      color: t.colors.textMuted,
+    },
+    tabTextActive: {
+      color: t.colors.text,
+    },
+    // Deposit tab
+    depositSection: {
+      alignItems: 'center',
+      width: '100%',
+    },
+    depositLabel: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textSecondary,
+      letterSpacing: 1,
+      marginBottom: spacing[4],
+    },
+    addressDisplay: {
+      alignItems: 'center',
+      paddingVertical: spacing[4],
+      paddingHorizontal: spacing[6],
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      borderRadius: t.borderRadius.md,
+    },
+    addressText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+      lineHeight: 22,
+    },
+    copyHint: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+      marginTop: spacing[2],
+    },
+    chainsText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+      marginTop: spacing[6],
+      textAlign: 'center',
+    },
+    // Withdraw tab
+    withdrawSection: {
+      alignItems: 'center',
+      width: '100%',
+    },
+    availableLabel: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+      marginBottom: spacing[2],
+    },
+    amountWrapper: {
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing[8],
+    },
+    amountInput: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: 72,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.accent,
+      width: '100%',
+      padding: 0,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+      textAlign: 'center',
+    } as any,
+    maxButton: {
+      paddingVertical: spacing[1],
+      paddingHorizontal: spacing[2],
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      marginTop: spacing[2],
+      borderRadius: t.borderRadius.sm,
+    },
+    maxButtonText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.textMuted,
+    },
+    addressInputSection: {
+      width: '100%',
+    },
+    fieldLabel: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.textSecondary,
+      letterSpacing: 2,
+      marginBottom: spacing[2],
+    },
+    addressInput: {
+      fontFamily: t.typography.fontFamily,
+      backgroundColor: t.colors.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      borderRadius: t.borderRadius.sm,
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[4],
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.text,
+    } as any,
+    // Bottom dock
+    bottomContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+      padding: spacing[4],
+      paddingBottom: spacing[8],
+      minHeight: 101,
+      borderTopWidth: 1,
+      borderTopColor: t.colors.border,
+    },
+    dockLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+    },
+    dockSpacer: {
+      flex: 1,
+    },
+    bottomBackButton: {
+      paddingVertical: spacing[2],
+      paddingRight: spacing[2],
+    },
+    actionButton: {
+      backgroundColor: t.colors.accent,
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[6],
+      alignItems: 'center',
+      borderRadius: t.borderRadius.md,
+    },
+    actionButtonPressed: {
+      opacity: 0.9,
+    },
+    actionButtonDisabled: {
+      opacity: 0.6,
+    },
+    actionButtonText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.background,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
+    },
+    signInButton: {
+      borderWidth: 1,
+      borderColor: t.colors.success,
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[6],
+      marginTop: spacing[4],
+      borderRadius: t.borderRadius.sm,
+    },
+    signInButtonText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.success,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.semibold,
+    },
+  }), [t.key]);
+}

@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, Pressable, TextInput, Alert } from 'react-native';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { colors, typography, spacing, borderRadius, shadows } from '../src/theme';
+import { spacing, useTheme } from '../src/theme';
+import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 import { useBalanceStore } from '../src/stores/balance';
 import { buildCashOutTransaction, formatTransactionForDisplay } from '../src/services/terminal';
@@ -21,6 +22,8 @@ export default function CashOutScreen() {
 
   const { walletAddress } = useBalanceStore();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const [amount, setAmount] = useState(params.balance || '0');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -114,7 +117,7 @@ export default function CashOutScreen() {
               value={amount}
               onChangeText={setAmount}
               placeholder="0.00"
-              placeholderTextColor={colors.gray500}
+              placeholderTextColor={theme.colors.textMuted}
               keyboardType="decimal-pad"
               editable={!isLoading}
             />
@@ -152,169 +155,171 @@ export default function CashOutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.juiceDark,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[4],
-    paddingBottom: spacing[4],
-  },
-  backButton: {
-    padding: spacing[2],
-    width: 40,
-  },
-  backArrow: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceCyan,
-    fontSize: 32,
-    fontWeight: typography.weights.medium,
-  },
-  headerTitle: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.white,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[4],
-  },
-  storeName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.white,
-    textAlign: 'center',
-  },
-  chainName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-    textAlign: 'center',
-    marginTop: spacing[1],
-    marginBottom: spacing[6],
-  },
-  balanceInfo: {
-    alignItems: 'center',
-    marginBottom: spacing[6],
-  },
-  balanceLabel: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray400,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  balanceAmount: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes['3xl'],
-    fontWeight: typography.weights.bold,
-    color: colors.juiceOrange,
-    marginTop: spacing[1],
-  },
-  tokenSymbolLarge: {
-    fontSize: typography.sizes.lg,
-    color: colors.gray400,
-  },
-  inputSection: {
-    marginBottom: spacing[4],
-  },
-  label: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-    color: colors.gray400,
-    marginBottom: spacing[2],
-    letterSpacing: 1,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.juiceDarkLighter,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha10,
-    paddingHorizontal: spacing[4],
-  },
-  amountInput: {
-    flex: 1,
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
-    color: colors.white,
-    paddingVertical: spacing[4],
-  },
-  inputTokenSymbol: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray400,
-    marginRight: spacing[3],
-  },
-  maxButton: {
-    backgroundColor: colors.juiceOrange,
-    paddingVertical: spacing[1.5],
-    paddingHorizontal: spacing[3],
-    borderRadius: borderRadius.sm,
-  },
-  maxButtonText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.bold,
-    color: colors.juiceDark,
-  },
-  conversionCard: {
-    backgroundColor: colors.juiceDarkLighter,
-    padding: spacing[5],
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha10,
-    alignItems: 'center',
-    marginBottom: spacing[6],
-  },
-  conversionLabel: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray400,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  conversionAmount: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
-    color: colors.white,
-    marginTop: spacing[1],
-  },
-  conversionNote: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray500,
-    marginTop: spacing[2],
-    textAlign: 'center',
-  },
-  cashOutButton: {
-    backgroundColor: colors.juiceOrange,
-    paddingVertical: spacing[4],
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-  },
-  cashOutButtonPressed: {
-    opacity: 0.9,
-  },
-  cashOutButtonDisabled: {
-    opacity: 0.6,
-  },
-  cashOutButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceDark,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-  },
-});
+function useStyles(t: BrandTheme) {
+  return useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: spacing[4],
+      paddingTop: spacing[4],
+      paddingBottom: spacing[4],
+    },
+    backButton: {
+      padding: spacing[2],
+      width: 40,
+    },
+    backArrow: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.accent,
+      fontSize: 32,
+      fontWeight: t.typography.weights.medium,
+    },
+    headerTitle: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.semibold,
+      color: t.colors.text,
+    },
+    content: {
+      flex: 1,
+      paddingHorizontal: spacing[4],
+      paddingTop: spacing[4],
+    },
+    storeName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+      textAlign: 'center',
+    },
+    chainName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+      textAlign: 'center',
+      marginTop: spacing[1],
+      marginBottom: spacing[6],
+    },
+    balanceInfo: {
+      alignItems: 'center',
+      marginBottom: spacing[6],
+    },
+    balanceLabel: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+    },
+    balanceAmount: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes['3xl'],
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.accentSecondary,
+      marginTop: spacing[1],
+    },
+    tokenSymbolLarge: {
+      fontSize: t.typography.sizes.lg,
+      color: t.colors.textSecondary,
+    },
+    inputSection: {
+      marginBottom: spacing[4],
+    },
+    label: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      fontWeight: t.typography.weights.semibold,
+      color: t.colors.textSecondary,
+      marginBottom: spacing[2],
+      letterSpacing: 1,
+    },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: t.colors.backgroundSecondary,
+      borderRadius: t.borderRadius.lg,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      paddingHorizontal: spacing[4],
+    },
+    amountInput: {
+      flex: 1,
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes['2xl'],
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+      paddingVertical: spacing[4],
+    },
+    inputTokenSymbol: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textSecondary,
+      marginRight: spacing[3],
+    },
+    maxButton: {
+      backgroundColor: t.colors.accentSecondary,
+      paddingVertical: spacing[1.5],
+      paddingHorizontal: spacing[3],
+      borderRadius: t.borderRadius.sm,
+    },
+    maxButtonText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.background,
+    },
+    conversionCard: {
+      backgroundColor: t.colors.backgroundSecondary,
+      padding: spacing[5],
+      borderRadius: t.borderRadius.lg,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      alignItems: 'center',
+      marginBottom: spacing[6],
+    },
+    conversionLabel: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+    },
+    conversionAmount: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes['2xl'],
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+      marginTop: spacing[1],
+    },
+    conversionNote: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+      marginTop: spacing[2],
+      textAlign: 'center',
+    },
+    cashOutButton: {
+      backgroundColor: t.colors.accentSecondary,
+      paddingVertical: spacing[4],
+      borderRadius: t.borderRadius.lg,
+      alignItems: 'center',
+    },
+    cashOutButtonPressed: {
+      opacity: 0.9,
+    },
+    cashOutButtonDisabled: {
+      opacity: 0.6,
+    },
+    cashOutButtonText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.background,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.bold,
+    },
+  }), [t.key]);
+}

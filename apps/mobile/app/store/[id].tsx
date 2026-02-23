@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Image, useWindowDimensions } from 'react-native';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireAuth } from '../../src/hooks/useRequireAuth';
-import { colors, typography, spacing } from '../../src/theme';
+import { spacing, useTheme } from '../../src/theme';
+import type { BrandTheme } from '../../src/theme';
 import { PageContainer } from '../../src/components/PageContainer';
 import {
   fetchProjectStats,
@@ -30,6 +31,8 @@ interface GraphStatProps {
 
 function GraphStat({ label, value, data, labels, color, isLoading, rangeLabel = '30d', formatValue }: GraphStatProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const maxValue = Math.max(...data, 1);
 
@@ -112,6 +115,8 @@ interface TimeRangeSelectorProps {
 
 function TimeRangeSelector({ selected, onSelect }: TimeRangeSelectorProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   return (
     <View style={styles.timeRangeContainer}>
       {TIME_RANGES.map((range) => (
@@ -153,6 +158,8 @@ export default function RevnetDetailScreen() {
   const cashOutRef = useRef<View>(null);
   const walletAddress = useBalanceStore((state) => state.walletAddress);
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
 
@@ -431,10 +438,10 @@ export default function RevnetDetailScreen() {
           </View>
           {isLoading ? (
             <View style={styles.loadingValue}>
-              <ActivityIndicator color={colors.white} size="small" />
+              <ActivityIndicator color={theme.colors.text} size="small" />
             </View>
           ) : (
-            <Text style={[styles.statValue, { color: colors.white }]}>
+            <Text style={[styles.statValue, { color: theme.colors.text }]}>
               {paymentsCount}
             </Text>
           )}
@@ -519,265 +526,272 @@ export default function RevnetDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.juiceDark,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[4],
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingBottom: spacing[3],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.whiteAlpha10,
-  },
-  headerRowMobile: {
-    paddingTop: spacing[6],
-  },
-  headerLogo: {
-    width: 40,
-    height: 40,
-    borderRadius: 0,
-    marginRight: spacing[3],
-  },
-  headerTextColumn: {
-    flex: 1,
-  },
-  topBackButton: {
-    paddingVertical: spacing[2],
-    paddingRight: spacing[3],
-  },
-  topBackArrow: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceCyan,
-    fontSize: 32,
-  },
-  headerName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.white,
-  },
-  headerToken: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[4],
-    paddingBottom: spacing[4],
-  },
-  storeName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
-    color: colors.white,
-  },
-  chainName: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-    marginTop: spacing[1],
-    marginBottom: spacing[8],
-  },
-  statSection: {
-    marginBottom: spacing[10],
-  },
-  statLabel: {
-    fontFamily: typography.fontFamily,
-    color: colors.gray400,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.bold,
-    letterSpacing: 2,
-  },
-  statValue: {
-    fontFamily: typography.fontFamily,
-    fontSize: 48,
-    fontWeight: typography.weights.bold,
-    marginTop: spacing[1],
-    marginBottom: spacing[2],
-  },
-  statValueSuffix: {
-    fontSize: typography.sizes.lg,
-    color: colors.gray400,
-  },
-  tokenBalanceSubtext: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray500,
-    marginTop: -spacing[1],
-    marginBottom: spacing[2],
-  },
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-  },
-  valueSpinner: {
-    marginBottom: spacing[1],
-  },
-  loadingValue: {
-    height: 60,
-    justifyContent: 'center',
-    marginTop: spacing[1],
-    marginBottom: spacing[2],
-  },
-  graphContainer: {
-    height: 80,
-  },
-  graphBars: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  graphBarWrapper: {
-    flex: 1,
-    height: '100%',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  graphBar: {
-    width: '100%',
-    minHeight: 2,
-  },
-  graphBarSelected: {
-    // Selected state handled inline with full opacity
-  },
-  tooltipDate: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.juiceCyan,
-  },
-  tooltipValue: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.bold,
-    color: colors.juiceCyan,
-  },
-  tooltipLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-  },
-  graphLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing[2],
-  },
-  graphLabel: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray500,
-  },
-  volumeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing[1],
-  },
-  timeRangeContainer: {
-    flexDirection: 'row',
-    gap: spacing[1],
-  },
-  timeRangeButton: {
-    paddingHorizontal: spacing[2],
-    paddingVertical: spacing[1],
-    borderRadius: 4,
-  },
-  timeRangeButtonActive: {
-    backgroundColor: colors.whiteAlpha10,
-  },
-  timeRangeText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xs,
-    color: colors.gray500,
-  },
-  timeRangeTextActive: {
-    color: colors.juiceCyan,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    padding: spacing[4],
-    paddingBottom: spacing[8],
-    minHeight: 101,
-    borderTopWidth: 1,
-    borderTopColor: colors.whiteAlpha10,
-  },
-  dockSpacer: {
-    flex: 1,
-  },
-  button: {
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[6],
-    alignItems: 'center',
-  },
-  buttonPressed: {
-    opacity: 0.9,
-  },
-  cashOutButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.gray500,
-  },
-  qrButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-  },
-  qrButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.gray400,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-  },
-  spendButton: {
-    backgroundColor: colors.juiceCyan,
-  },
-  dockLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-  },
-  bottomBackButton: {
-    paddingVertical: spacing[2],
-    paddingRight: spacing[2],
-  },
-  menuButton: {
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[3],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuDots: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes['2xl'],
-    color: colors.gray400,
-    lineHeight: 28,
-  },
-  cashOutButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.gray400,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-  },
-  spendButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceDark,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-  },
-});
+function useStyles(t: BrandTheme) {
+  return useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing[4],
+      paddingTop: spacing[4],
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing[4],
+      paddingBottom: spacing[3],
+      borderBottomWidth: 1,
+      borderBottomColor: t.colors.border,
+    },
+    headerRowMobile: {
+      paddingTop: spacing[6],
+    },
+    headerLogo: {
+      width: 40,
+      height: 40,
+      borderRadius: t.borderRadius.sm,
+      marginRight: spacing[3],
+    },
+    headerTextColumn: {
+      flex: 1,
+    },
+    topBackButton: {
+      paddingVertical: spacing[2],
+      paddingRight: spacing[3],
+    },
+    topBackArrow: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.accent,
+      fontSize: 32,
+    },
+    headerName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+    },
+    headerToken: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+    },
+    content: {
+      flex: 1,
+    },
+    contentContainer: {
+      paddingHorizontal: spacing[4],
+      paddingTop: spacing[4],
+      paddingBottom: spacing[4],
+    },
+    storeName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes['2xl'],
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+    },
+    chainName: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+      marginTop: spacing[1],
+      marginBottom: spacing[8],
+    },
+    statSection: {
+      marginBottom: spacing[10],
+    },
+    statLabel: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.textSecondary,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.bold,
+      letterSpacing: 2,
+    },
+    statValue: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: 48,
+      fontWeight: t.typography.weights.bold,
+      marginTop: spacing[1],
+      marginBottom: spacing[2],
+    },
+    statValueSuffix: {
+      fontSize: t.typography.sizes.lg,
+      color: t.colors.textSecondary,
+    },
+    tokenBalanceSubtext: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+      marginTop: -spacing[1],
+      marginBottom: spacing[2],
+    },
+    valueRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+    },
+    valueSpinner: {
+      marginBottom: spacing[1],
+    },
+    loadingValue: {
+      height: 60,
+      justifyContent: 'center',
+      marginTop: spacing[1],
+      marginBottom: spacing[2],
+    },
+    graphContainer: {
+      height: 80,
+    },
+    graphBars: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      gap: 4,
+    },
+    graphBarWrapper: {
+      flex: 1,
+      height: '100%',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+    },
+    graphBar: {
+      width: '100%',
+      minHeight: 2,
+    },
+    graphBarSelected: {
+      // Selected state handled inline with full opacity
+    },
+    tooltipDate: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.accent,
+    },
+    tooltipValue: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.accent,
+    },
+    tooltipLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[2],
+    },
+    graphLabels: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: spacing[2],
+    },
+    graphLabel: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+    },
+    volumeHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[1],
+    },
+    timeRangeContainer: {
+      flexDirection: 'row',
+      gap: spacing[1],
+    },
+    timeRangeButton: {
+      paddingHorizontal: spacing[2],
+      paddingVertical: spacing[1],
+      borderRadius: 4,
+    },
+    timeRangeButtonActive: {
+      backgroundColor: t.colors.border,
+    },
+    timeRangeText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+    },
+    timeRangeTextActive: {
+      color: t.colors.accent,
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+      padding: spacing[4],
+      paddingBottom: spacing[8],
+      minHeight: 101,
+      borderTopWidth: 1,
+      borderTopColor: t.colors.border,
+    },
+    dockSpacer: {
+      flex: 1,
+    },
+    button: {
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[6],
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 52,
+    },
+    buttonPressed: {
+      opacity: 0.9,
+    },
+    cashOutButton: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: t.colors.textMuted,
+      borderRadius: t.borderRadius.sm,
+    },
+    qrButton: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      borderRadius: t.borderRadius.sm,
+    },
+    qrButtonText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.textSecondary,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.semibold,
+    },
+    spendButton: {
+      backgroundColor: t.colors.accent,
+      borderRadius: t.borderRadius.md,
+    },
+    dockLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+    },
+    bottomBackButton: {
+      paddingVertical: spacing[2],
+      paddingRight: spacing[2],
+    },
+    menuButton: {
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[3],
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    menuDots: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes['2xl'],
+      color: t.colors.textSecondary,
+      lineHeight: 28,
+    },
+    cashOutButtonText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.textSecondary,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.semibold,
+    },
+    spendButtonText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.background,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
+    },
+  }), [t.key]);
+}

@@ -1,11 +1,12 @@
 import { View, Text, StyleSheet, Pressable, Alert, ScrollView } from 'react-native';
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../src/stores/auth';
 import { usePendingActionStore } from '../src/stores/pendingAction';
 import { useAuthPopoverStore } from '../src/stores/authPopover';
-import { colors, typography, spacing, borderRadius, shadows } from '../src/theme';
+import { spacing, useTheme } from '../src/theme';
+import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 
 // Mock data for demo mode
@@ -20,6 +21,8 @@ export default function ProfileScreen() {
   const logout = useAuthStore((state) => state.logout);
   const setPendingAction = usePendingActionStore((state) => state.setPendingAction);
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useStyles(theme);
   const signInRef = useRef<View>(null);
 
   const handleDismiss = () => {
@@ -98,12 +101,12 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.menuSection}>
-              <MenuItem label={t('profile.editProfile')} />
-              <MenuItem label={t('profile.transactionHistory')} />
-              <MenuItem label={t('profile.paymentMethods')} />
-              <MenuItem label={t('profile.notifications')} />
-              <MenuItem label={t('profile.settings')} />
-              <MenuItem label={t('profile.helpSupport')} />
+              <MenuItem label={t('profile.editProfile')} theme={theme} />
+              <MenuItem label={t('profile.transactionHistory')} theme={theme} />
+              <MenuItem label={t('profile.paymentMethods')} theme={theme} />
+              <MenuItem label={t('profile.notifications')} theme={theme} />
+              <MenuItem label={t('profile.settings')} theme={theme} />
+              <MenuItem label={t('profile.helpSupport')} theme={theme} />
             </View>
 
             <Pressable
@@ -122,7 +125,8 @@ export default function ProfileScreen() {
   );
 }
 
-function MenuItem({ label }: { label: string }) {
+function MenuItem({ label, theme }: { label: string; theme: BrandTheme }) {
+  const styles = useMenuStyles(theme);
   return (
     <Pressable style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}>
       <Text style={styles.menuText}>{label}</Text>
@@ -131,168 +135,175 @@ function MenuItem({ label }: { label: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.juiceDark,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[4],
-    paddingBottom: spacing[2],
-  },
-  dismissButton: {
-    padding: spacing[2],
-  },
-  dismissText: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceCyan,
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
-  },
-  content: {
-    flex: 1,
-  },
-  signInContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing[10],
-    paddingTop: spacing[20],
-  },
-  iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.juiceDarkLighter,
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[6],
-  },
-  iconText: {
-    fontSize: 48,
-  },
-  signInTitle: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.white,
-    marginBottom: spacing[2],
-    textAlign: 'center',
-  },
-  signInSubtitle: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray400,
-    textAlign: 'center',
-    marginBottom: spacing[6],
-  },
-  primaryButton: {
-    backgroundColor: colors.juiceCyan,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[8],
-    borderRadius: borderRadius.lg,
-  },
-  primaryButtonPressed: {
-    opacity: 0.8,
-  },
-  primaryButtonText: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceDark,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    paddingTop: spacing[4],
-    paddingBottom: spacing[8],
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.juiceCyan,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[4],
-  },
-  avatarText: {
-    fontFamily: typography.fontFamily,
-    color: colors.juiceDark,
-    fontSize: typography.sizes['3xl'],
-    fontWeight: typography.weights.bold,
-  },
-  name: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.white,
-  },
-  email: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.gray400,
-    marginTop: spacing[1],
-  },
-  menuSection: {
-    backgroundColor: colors.juiceDarkLighter,
-    marginHorizontal: spacing[4],
-    marginTop: spacing[4],
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.whiteAlpha10,
-    overflow: 'hidden',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing[4],
-    paddingHorizontal: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.whiteAlpha10,
-  },
-  menuItemPressed: {
-    backgroundColor: colors.whiteAlpha10,
-  },
-  menuText: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.sm,
-    color: colors.white,
-  },
-  menuArrow: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.lg,
-    color: colors.gray500,
-  },
-  logoutButton: {
-    marginHorizontal: spacing[4],
-    marginTop: spacing[4],
-    backgroundColor: colors.juiceDarkLighter,
-    paddingVertical: spacing[4],
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.danger,
-  },
-  logoutButtonPressed: {
-    backgroundColor: colors.danger,
-  },
-  logoutText: {
-    fontFamily: typography.fontFamily,
-    color: colors.danger,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-  },
-  version: {
-    fontFamily: typography.fontFamily,
-    textAlign: 'center',
-    color: colors.gray600,
-    fontSize: typography.sizes.xs,
-    marginVertical: spacing[6],
-  },
-});
+function useMenuStyles(t: BrandTheme) {
+  return useMemo(() => StyleSheet.create({
+    menuItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: spacing[4],
+      paddingHorizontal: spacing[4],
+      borderBottomWidth: 1,
+      borderBottomColor: t.colors.border,
+    },
+    menuItemPressed: {
+      backgroundColor: t.colors.border,
+    },
+    menuText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.text,
+    },
+    menuArrow: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      color: t.colors.textMuted,
+    },
+  }), [t.key]);
+}
+
+function useStyles(t: BrandTheme) {
+  return useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      paddingHorizontal: spacing[4],
+      paddingTop: spacing[4],
+      paddingBottom: spacing[2],
+    },
+    dismissButton: {
+      padding: spacing[2],
+    },
+    dismissText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.accent,
+      fontSize: t.typography.sizes.base,
+      fontWeight: t.typography.weights.semibold,
+    },
+    content: {
+      flex: 1,
+    },
+    signInContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing[10],
+      paddingTop: spacing[20],
+    },
+    iconCircle: {
+      width: 100,
+      height: 100,
+      borderRadius: t.borderRadius.full,
+      backgroundColor: t.colors.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: t.colors.borderHover,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing[6],
+    },
+    iconText: {
+      fontSize: 48,
+    },
+    signInTitle: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.semibold,
+      color: t.colors.text,
+      marginBottom: spacing[2],
+      textAlign: 'center',
+    },
+    signInSubtitle: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: spacing[6],
+    },
+    primaryButton: {
+      backgroundColor: t.colors.accent,
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[8],
+      borderRadius: t.borderRadius.lg,
+    },
+    primaryButtonPressed: {
+      opacity: 0.8,
+    },
+    primaryButtonText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.background,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.semibold,
+    },
+    profileHeader: {
+      alignItems: 'center',
+      paddingTop: spacing[4],
+      paddingBottom: spacing[8],
+    },
+    avatar: {
+      width: 80,
+      height: 80,
+      borderRadius: t.borderRadius.full,
+      backgroundColor: t.colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing[4],
+    },
+    avatarText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.background,
+      fontSize: t.typography.sizes['3xl'],
+      fontWeight: t.typography.weights.bold,
+    },
+    name: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+    },
+    email: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textSecondary,
+      marginTop: spacing[1],
+    },
+    menuSection: {
+      backgroundColor: t.colors.backgroundSecondary,
+      marginHorizontal: spacing[4],
+      marginTop: spacing[4],
+      borderRadius: t.borderRadius.lg,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      overflow: 'hidden',
+    },
+    logoutButton: {
+      marginHorizontal: spacing[4],
+      marginTop: spacing[4],
+      backgroundColor: t.colors.backgroundSecondary,
+      paddingVertical: spacing[4],
+      borderRadius: t.borderRadius.lg,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: t.colors.danger,
+    },
+    logoutButtonPressed: {
+      backgroundColor: t.colors.danger,
+    },
+    logoutText: {
+      fontFamily: t.typography.fontFamily,
+      color: t.colors.danger,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.semibold,
+    },
+    version: {
+      fontFamily: t.typography.fontFamily,
+      textAlign: 'center',
+      color: t.colors.textMuted,
+      fontSize: t.typography.sizes.xs,
+      marginVertical: spacing[6],
+    },
+  }), [t.key]);
+}

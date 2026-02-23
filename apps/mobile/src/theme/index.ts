@@ -218,6 +218,11 @@ export const layout = {
   contentWidth: '100%' as const,
 };
 
+// Brand theming system
+export { useTheme } from './useTheme';
+export { BRANDS, BRAND_ORDER, BRAND_LABELS } from './brands';
+export type { BrandTheme, BrandKey } from './brands';
+
 export default {
   colors,
   typography,
