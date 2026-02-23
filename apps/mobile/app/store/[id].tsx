@@ -466,31 +466,29 @@ export default function RevnetDetailScreen() {
           )}
 
           {hasBalance && (
-            <>
+            menuExpanded ? (
+              <Pressable
+                ref={cashOutRef}
+                style={({ pressed }) => [
+                  styles.button,
+                  styles.cashOutButton,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={handleCashOut}
+              >
+                <Text style={styles.cashOutButtonText}>{t('store.cashOut')}</Text>
+              </Pressable>
+            ) : (
               <Pressable
                 style={({ pressed }) => [
                   styles.menuButton,
                   pressed && styles.buttonPressed,
                 ]}
-                onPress={() => setMenuExpanded(!menuExpanded)}
+                onPress={() => setMenuExpanded(true)}
               >
                 <Text style={styles.menuDots}>⋮</Text>
               </Pressable>
-
-              {menuExpanded && (
-                <Pressable
-                  ref={cashOutRef}
-                  style={({ pressed }) => [
-                    styles.button,
-                    styles.cashOutButton,
-                    pressed && styles.buttonPressed,
-                  ]}
-                  onPress={handleCashOut}
-                >
-                  <Text style={styles.cashOutButtonText}>{t('store.cashOut')}</Text>
-                </Pressable>
-              )}
-            </>
+            )
           )}
         </View>
 
@@ -746,16 +744,16 @@ function useStyles(t: BrandTheme) {
       borderRadius: t.borderRadius.sm,
     },
     qrButton: {
-      backgroundColor: 'transparent',
+      backgroundColor: t.colors.backgroundSecondary,
       borderWidth: 1,
       borderColor: t.colors.border,
-      borderRadius: t.borderRadius.sm,
+      borderRadius: t.borderRadius.md,
     },
     qrButtonText: {
       fontFamily: t.typography.fontFamily,
-      color: t.colors.textSecondary,
-      fontSize: t.typography.sizes.sm,
-      fontWeight: t.typography.weights.semibold,
+      color: t.colors.text,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
     },
     spendButton: {
       backgroundColor: t.colors.accent,
