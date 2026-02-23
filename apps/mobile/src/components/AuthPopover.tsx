@@ -109,7 +109,7 @@ function EmailStep() {
         disabled={isLoading}
       >
         {isLoading ? (
-          <ActivityIndicator color={theme.colors.success} size="small" />
+          <ActivityIndicator color={theme.colors.accent} size="small" />
         ) : (
           <Text style={styles.primaryButtonText}>{t('auth.sendCode')}</Text>
         )}
@@ -203,7 +203,7 @@ function VerifyStep() {
         disabled={isLoading}
       >
         {isLoading ? (
-          <ActivityIndicator color={theme.colors.success} size="small" />
+          <ActivityIndicator color={theme.colors.accent} size="small" />
         ) : (
           <Text style={styles.primaryButtonText}>{t('verify.verify')}</Text>
         )}
@@ -345,7 +345,7 @@ function WalletStep() {
           >
             {isLoading ? (
               <View style={styles.loadingRow}>
-                <ActivityIndicator color={theme.colors.success} size="small" />
+                <ActivityIndicator color={theme.colors.accent} size="small" />
                 {status ? <Text style={styles.statusText}>{status}</Text> : null}
               </View>
             ) : (
@@ -510,7 +510,7 @@ function useStyles(t: BrandTheme) {
     primaryButton: {
       flex: 1,
       borderWidth: 1,
-      borderColor: t.colors.success,
+      borderColor: t.colors.accent,
       backgroundColor: 'transparent',
       paddingVertical: spacing[1.5],
       paddingHorizontal: spacing[3],
@@ -522,7 +522,7 @@ function useStyles(t: BrandTheme) {
     primaryButtonText: {
       fontFamily: t.typography.fontFamily,
       fontSize: t.typography.sizes.sm,
-      color: t.colors.success,
+      color: t.colors.accent,
       fontWeight: t.typography.weights.medium,
     },
     secondaryButton: {
@@ -614,7 +614,7 @@ function useStyles(t: BrandTheme) {
     statusText: {
       fontFamily: t.typography.fontFamily,
       fontSize: t.typography.sizes.xs,
-      color: t.colors.success,
+      color: t.colors.accent,
     },
   }), [t.key]);
 }
