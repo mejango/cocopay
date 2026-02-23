@@ -167,11 +167,9 @@ export default function RevnetDetailScreen() {
 
   // Graph data with time ranges
   const [balanceGraph, setBalanceGraph] = useState<GraphData>({ values: [], labels: [] });
-  const [balanceTimeRange, setBalanceTimeRange] = useState<TimeRange>('1m');
   const [paymentsGraph, setPaymentsGraph] = useState<GraphData>({ values: [], labels: [] });
-  const [paymentsTimeRange, setPaymentsTimeRange] = useState<TimeRange>('1m');
   const [volumeGraph, setVolumeGraph] = useState<GraphData>({ values: [], labels: [] });
-  const [volumeTimeRange, setVolumeTimeRange] = useState<TimeRange>('1m');
+  const [timeRange, setTimeRange] = useState<TimeRange>('1m');
 
   const [isLoading, setIsLoading] = useState(true);
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
@@ -215,7 +213,7 @@ export default function RevnetDetailScreen() {
 
       setIsBalanceLoading(true);
       try {
-        const days = TIME_RANGES.find(r => r.key === balanceTimeRange)?.days ?? 30;
+        const days = TIME_RANGES.find(r => r.key === timeRange)?.days ?? 30;
         // Parse current balance (remove commas from formatted string) to fill recent periods
         const currentBalanceNumber = parseFloat((params.balance || '0').replace(/,/g, ''));
         const history = await fetchBalanceHistory(projectId, chainId, walletAddress, days, currentBalanceNumber);
@@ -229,7 +227,7 @@ export default function RevnetDetailScreen() {
     }
 
     loadBalanceHistory();
-  }, [projectId, chainId, walletAddress, balanceTimeRange, params.balance]);
+  }, [projectId, chainId, walletAddress, timeRange, params.balance]);
 
   // Fetch user's payments when time range changes
   useEffect(() => {
@@ -238,7 +236,7 @@ export default function RevnetDetailScreen() {
 
       setIsPaymentsLoading(true);
       try {
-        const days = TIME_RANGES.find(r => r.key === paymentsTimeRange)?.days ?? 30;
+        const days = TIME_RANGES.find(r => r.key === timeRange)?.days ?? 30;
         const payEvents = await fetchUserPayEvents(projectId, chainId, walletAddress, 500);
         setUserPaymentsCount(payEvents.length);
         const graph = generatePaymentsGraphData(payEvents, 10, days);
@@ -252,7 +250,7 @@ export default function RevnetDetailScreen() {
     }
 
     loadPayments();
-  }, [projectId, chainId, walletAddress, paymentsTimeRange]);
+  }, [projectId, chainId, walletAddress, timeRange]);
 
   // Fetch volume timeline when time range changes
   useEffect(() => {
@@ -261,7 +259,7 @@ export default function RevnetDetailScreen() {
 
       setIsVolumeLoading(true);
       try {
-        const days = TIME_RANGES.find(r => r.key === volumeTimeRange)?.days ?? 30;
+        const days = TIME_RANGES.find(r => r.key === timeRange)?.days ?? 30;
         // Pass current volumeUsd as fallback for single-chain projects without suckerGroupId
         const fallbackVolume = projectStats?.volumeUsd;
         // Detect USDC projects by tokenSymbol (Bendystraw tokenSymbol is the accounting currency)
@@ -280,7 +278,7 @@ export default function RevnetDetailScreen() {
     }
 
     loadVolumeTimeline();
-  }, [projectId, chainId, volumeTimeRange, projectStats?.volumeUsd, projectStats?.tokenSymbol]);
+  }, [projectId, chainId, timeRange, projectStats?.volumeUsd, projectStats?.tokenSymbol]);
 
   const handleCashOut = () => {
     cashOutRef.current?.measureInWindow((x, y, w, h) => {
@@ -367,15 +365,13 @@ export default function RevnetDetailScreen() {
             <Text style={styles.headerToken}>{tokenSymbol}</Text>
           </View>
         </View>
+        <TimeRangeSelector
+          selected={timeRange}
+          onSelect={setTimeRange}
+        />
         {/* VOLUME DA REDE - moved to top */}
         <View style={styles.statSection}>
-          <View style={styles.volumeHeader}>
-            <Text style={styles.statLabel}>{t('store.networkVolume')}</Text>
-            <TimeRangeSelector
-              selected={volumeTimeRange}
-              onSelect={setVolumeTimeRange}
-            />
-          </View>
+          <Text style={styles.statLabel}>{t('store.networkVolume')}</Text>
           {isLoading || isVolumeLoading ? (
             <View style={styles.loadingValue}>
               <ActivityIndicator color={'#a78bfa'} size="small" />
@@ -398,13 +394,7 @@ export default function RevnetDetailScreen() {
 
         {/* SEU SALDO - Cash out value in USD */}
         <View style={styles.statSection}>
-          <View style={styles.volumeHeader}>
-            <Text style={styles.statLabel}>{t('store.yourBalance')}</Text>
-            <TimeRangeSelector
-              selected={balanceTimeRange}
-              onSelect={setBalanceTimeRange}
-            />
-          </View>
+          <Text style={styles.statLabel}>{t('store.yourBalance')}</Text>
           {isLoading ? (
             <View style={styles.loadingValue}>
               <ActivityIndicator color={'#f472b6'} size="small" />
@@ -427,13 +417,7 @@ export default function RevnetDetailScreen() {
 
         {/* SEUS PAGAMENTOS (user's payments only) */}
         <View style={styles.statSection}>
-          <View style={styles.volumeHeader}>
-            <Text style={styles.statLabel}>{t('store.yourPayments')}</Text>
-            <TimeRangeSelector
-              selected={paymentsTimeRange}
-              onSelect={setPaymentsTimeRange}
-            />
-          </View>
+          <Text style={styles.statLabel}>{t('store.yourPayments')}</Text>
           {isLoading ? (
             <View style={styles.loadingValue}>
               <ActivityIndicator color={theme.colors.text} size="small" />
@@ -682,6 +666,7 @@ function useStyles(t: BrandTheme) {
     timeRangeContainer: {
       flexDirection: 'row',
       gap: spacing[1],
+      marginBottom: spacing[4],
     },
     timeRangeButton: {
       paddingHorizontal: spacing[2],
