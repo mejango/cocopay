@@ -178,7 +178,6 @@ export default function RevnetDetailScreen() {
   const [isPaymentsLoading, setIsPaymentsLoading] = useState(false);
   const [isVolumeLoading, setIsVolumeLoading] = useState(false);
   const [userPaymentsCount, setUserPaymentsCount] = useState(0);
-  const [menuExpanded, setMenuExpanded] = useState(false);
 
   const balance = parseFloat(params.balance || '0');
   const hasBalance = balance > 0;
@@ -464,35 +463,23 @@ export default function RevnetDetailScreen() {
               <Text style={styles.topBackArrow}>←</Text>
             </Pressable>
           )}
-
-          {hasBalance && (
-            menuExpanded ? (
-              <Pressable
-                ref={cashOutRef}
-                style={({ pressed }) => [
-                  styles.button,
-                  styles.cashOutButton,
-                  pressed && styles.buttonPressed,
-                ]}
-                onPress={handleCashOut}
-              >
-                <Text style={styles.cashOutButtonText}>{t('store.cashOut')}</Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.menuButton,
-                  pressed && styles.buttonPressed,
-                ]}
-                onPress={() => setMenuExpanded(true)}
-              >
-                <Text style={styles.menuDots}>⋮</Text>
-              </Pressable>
-            )
-          )}
         </View>
 
         <View style={styles.dockSpacer} />
+
+        {hasBalance && (
+          <Pressable
+            ref={cashOutRef}
+            style={({ pressed }) => [
+              styles.button,
+              styles.cashOutButton,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={handleCashOut}
+          >
+            <Text style={styles.cashOutButtonText}>{t('store.cashOut')}</Text>
+          </Pressable>
+        )}
 
         <Pressable
           style={({ pressed }) => [
@@ -767,18 +754,6 @@ function useStyles(t: BrandTheme) {
     bottomBackButton: {
       paddingVertical: spacing[2],
       paddingRight: spacing[2],
-    },
-    menuButton: {
-      paddingVertical: spacing[3],
-      paddingHorizontal: spacing[3],
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    menuDots: {
-      fontFamily: t.typography.fontFamily,
-      fontSize: t.typography.sizes['2xl'],
-      color: t.colors.textSecondary,
-      lineHeight: 28,
     },
     cashOutButtonText: {
       fontFamily: t.typography.fontFamily,
