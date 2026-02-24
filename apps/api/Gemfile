@@ -25,9 +25,7 @@ gem "faraday", "~> 2.7"
 # Email delivery
 gem "mailgun-ruby", "~> 1.2"
 
-# Background jobs
-gem "solid_queue", "~> 1.0"
-# gem "mission_control-jobs", "~> 0.3"  # Requires asset pipeline, disabled for API-only mode
+# Background jobs use the built-in :async adapter (in-process threads)
 
 # ActionCable uses redis gem directly
 
