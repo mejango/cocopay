@@ -71,12 +71,21 @@ CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
 # Production stage (last — Railway builds this by default)
 FROM base AS production
 
+# Enable jemalloc for reduced memory usage and fragmentation
 ENV RAILS_ENV="production" \
-    BUNDLE_WITHOUT="development test"
+    BUNDLE_WITHOUT="development test" \
+    LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2 \
+    MALLOC_ARENA_MAX=2 \
+    RUBY_GC_HEAP_INIT_SLOTS=800000 \
+    RUBY_GC_HEAP_FREE_SLOTS_MIN_RATIO=0.2 \
+    RUBY_GC_HEAP_FREE_SLOTS_MAX_RATIO=0.4
 
 # Copy built artifacts
 COPY --from=build /app /app
 COPY --from=build /usr/local/bundle /usr/local/bundle
+
+# Create runtime directories
+RUN mkdir -p tmp/pids tmp/cache log storage
 
 # Run and own files as a non-root user
 RUN groupadd --system --gid 1000 rails && \
