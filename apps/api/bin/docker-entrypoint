@@ -7,4 +7,16 @@ if [ -n "$DATABASE_URL" ]; then
   bin/rails db:migrate
 fi
 
-exec "$@"
+# Trap signals to log why the process exits
+trap 'echo "Received SIGTERM, shutting down..."' TERM
+trap 'echo "Received SIGINT, shutting down..."' INT
+trap 'echo "Received SIGHUP"' HUP
+
+# Run the server in the foreground, log exit code
+echo "Starting server: $@"
+"$@" &
+PID=$!
+wait $PID
+EXIT_CODE=$?
+echo "Server process (PID $PID) exited with code $EXIT_CODE"
+exit $EXIT_CODE
