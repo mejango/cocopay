@@ -3,12 +3,12 @@
 require "rails_helper"
 
 RSpec.describe "API V1 Auth", type: :request do
-  describe "POST /api/v1/auth/email/send" do
+  describe "POST /v1/auth/email/send" do
     let(:email) { "user@example.com" }
 
     context "with valid email" do
       it "sends magic link and returns verification_id" do
-        post "/api/v1/auth/email/send",
+        post "/v1/auth/email/send",
              params: { email: email }.to_json,
              headers: json_headers
 
@@ -19,7 +19,7 @@ RSpec.describe "API V1 Auth", type: :request do
 
       it "creates or finds user" do
         expect {
-          post "/api/v1/auth/email/send",
+          post "/v1/auth/email/send",
                params: { email: email }.to_json,
                headers: json_headers
         }.to change(User, :count).by(1)
@@ -29,7 +29,7 @@ RSpec.describe "API V1 Auth", type: :request do
         create(:user, email: email)
 
         expect {
-          post "/api/v1/auth/email/send",
+          post "/v1/auth/email/send",
                params: { email: email }.to_json,
                headers: json_headers
         }.not_to change(User, :count)
@@ -38,7 +38,7 @@ RSpec.describe "API V1 Auth", type: :request do
 
     context "with invalid email" do
       it "returns validation error" do
-        post "/api/v1/auth/email/send",
+        post "/v1/auth/email/send",
              params: { email: "invalid" }.to_json,
              headers: json_headers
 
@@ -48,7 +48,7 @@ RSpec.describe "API V1 Auth", type: :request do
     end
   end
 
-  describe "POST /api/v1/auth/email/verify" do
+  describe "POST /v1/auth/email/verify" do
     let(:user) { create(:user) }
     let(:magic_link_result) { MagicLinkService.generate(user) }
     let(:token) { magic_link_result[:token] }
@@ -56,7 +56,7 @@ RSpec.describe "API V1 Auth", type: :request do
 
     context "with valid token" do
       it "returns JWT and user" do
-        post "/api/v1/auth/email/verify",
+        post "/v1/auth/email/verify",
              params: { verification_id: verification_id, token: token }.to_json,
              headers: json_headers
 
@@ -67,7 +67,7 @@ RSpec.describe "API V1 Auth", type: :request do
 
       it "creates a session" do
         expect {
-          post "/api/v1/auth/email/verify",
+          post "/v1/auth/email/verify",
                params: { verification_id: verification_id, token: token }.to_json,
                headers: json_headers
         }.to change(Session, :count).by(1)
@@ -76,7 +76,7 @@ RSpec.describe "API V1 Auth", type: :request do
 
     context "with invalid token" do
       it "returns unauthorized" do
-        post "/api/v1/auth/email/verify",
+        post "/v1/auth/email/verify",
              params: { verification_id: verification_id, token: "wrong" }.to_json,
              headers: json_headers
 
@@ -86,7 +86,7 @@ RSpec.describe "API V1 Auth", type: :request do
 
     context "with expired verification" do
       it "returns unauthorized" do
-        post "/api/v1/auth/email/verify",
+        post "/v1/auth/email/verify",
              params: { verification_id: "nonexistent", token: token }.to_json,
              headers: json_headers
 
@@ -95,11 +95,11 @@ RSpec.describe "API V1 Auth", type: :request do
     end
   end
 
-  describe "POST /api/v1/auth/wallet/nonce" do
+  describe "POST /v1/auth/wallet/nonce" do
     let(:address) { "0x" + "a1b2c3d4e5" * 4 }
 
     it "returns a nonce" do
-      post "/api/v1/auth/wallet/nonce",
+      post "/v1/auth/wallet/nonce",
            params: { address: address }.to_json,
            headers: json_headers
 
@@ -108,7 +108,7 @@ RSpec.describe "API V1 Auth", type: :request do
     end
 
     it "returns 422 without address" do
-      post "/api/v1/auth/wallet/nonce",
+      post "/v1/auth/wallet/nonce",
            params: {}.to_json,
            headers: json_headers
 
@@ -116,7 +116,7 @@ RSpec.describe "API V1 Auth", type: :request do
     end
   end
 
-  describe "POST /api/v1/auth/wallet/siwe" do
+  describe "POST /v1/auth/wallet/siwe" do
     let(:address) { "0x" + "a1b2c3d4e5" * 4 }
 
     context "with valid signature" do
@@ -125,7 +125,7 @@ RSpec.describe "API V1 Auth", type: :request do
       end
 
       it "returns JWT and user for new wallet" do
-        post "/api/v1/auth/wallet/siwe",
+        post "/v1/auth/wallet/siwe",
              params: { address: address, message: "test message", signature: "0xsig" }.to_json,
              headers: json_headers
 
@@ -136,7 +136,7 @@ RSpec.describe "API V1 Auth", type: :request do
 
       it "creates a new user for unknown wallet" do
         expect {
-          post "/api/v1/auth/wallet/siwe",
+          post "/v1/auth/wallet/siwe",
                params: { address: address, message: "test message", signature: "0xsig" }.to_json,
                headers: json_headers
         }.to change(User, :count).by(1)
@@ -146,7 +146,7 @@ RSpec.describe "API V1 Auth", type: :request do
         create(:wallet_user, wallet_address: address.downcase)
 
         expect {
-          post "/api/v1/auth/wallet/siwe",
+          post "/v1/auth/wallet/siwe",
                params: { address: address, message: "test message", signature: "0xsig" }.to_json,
                headers: json_headers
         }.not_to change(User, :count)
@@ -154,7 +154,7 @@ RSpec.describe "API V1 Auth", type: :request do
 
       it "creates session with wallet auth method" do
         expect {
-          post "/api/v1/auth/wallet/siwe",
+          post "/v1/auth/wallet/siwe",
                params: { address: address, message: "test message", signature: "0xsig" }.to_json,
                headers: json_headers
         }.to change(Session, :count).by(1)
@@ -170,7 +170,7 @@ RSpec.describe "API V1 Auth", type: :request do
       end
 
       it "returns 401" do
-        post "/api/v1/auth/wallet/siwe",
+        post "/v1/auth/wallet/siwe",
              params: { address: address, message: "test message", signature: "0xbadsig" }.to_json,
              headers: json_headers
 
@@ -180,7 +180,7 @@ RSpec.describe "API V1 Auth", type: :request do
 
     context "with missing params" do
       it "returns 422" do
-        post "/api/v1/auth/wallet/siwe",
+        post "/v1/auth/wallet/siwe",
              params: { address: address }.to_json,
              headers: json_headers
 
@@ -189,18 +189,18 @@ RSpec.describe "API V1 Auth", type: :request do
     end
   end
 
-  describe "DELETE /api/v1/auth/session" do
+  describe "DELETE /v1/auth/session" do
     let(:user) { create(:user) }
 
     it "revokes current session" do
-      delete "/api/v1/auth/session", headers: authenticated_headers(user)
+      delete "/v1/auth/session", headers: authenticated_headers(user)
 
       expect(response).to have_http_status(:ok)
       expect(json_response[:data][:logged_out]).to be true
     end
 
     it "requires authentication" do
-      delete "/api/v1/auth/session", headers: json_headers
+      delete "/v1/auth/session", headers: json_headers
 
       expect(response).to have_http_status(:unauthorized)
     end

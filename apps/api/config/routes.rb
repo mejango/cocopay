@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   get "health/ready", to: "health#ready"
 
   # API V1
-  namespace :api do
+  scope module: :api do
     namespace :v1 do
       # Authentication (scope instead of namespace to avoid nested controller path)
       scope :auth do
