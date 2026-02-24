@@ -8,11 +8,11 @@ at_exit do
   STDERR.flush
 end
 
-# Heartbeat logger — logs memory usage every 15s so we can see when the process dies
 if ENV["RAILS_ENV"] == "production"
+  # Heartbeat every 5s with memory tracking
   Thread.new do
     loop do
-      sleep 15
+      sleep 5
       rss = begin
         File.read("/proc/#{Process.pid}/status").match(/VmRSS:\s+(\d+)/)[1].to_i / 1024
       rescue
@@ -22,6 +22,25 @@ if ENV["RAILS_ENV"] == "production"
       STDOUT.flush
     rescue => e
       STDERR.puts "[HEARTBEAT ERROR] #{e.message}"
+    end
+  end
+
+  # Self-ping to keep the container active (in case Railway sleeps idle containers)
+  Thread.new do
+    sleep 10 # Wait for server to be ready
+    port = ENV.fetch("PORT", "3000")
+    loop do
+      sleep 25
+      begin
+        require "net/http"
+        response = Net::HTTP.get_response(URI("http://127.0.0.1:#{port}/up"))
+        STDOUT.puts "[SELF-PING] /up returned #{response.code} at #{Time.now.utc.iso8601}"
+      rescue => e
+        STDOUT.puts "[SELF-PING] failed: #{e.message} at #{Time.now.utc.iso8601}"
+      end
+      STDOUT.flush
+    rescue => e
+      STDERR.puts "[SELF-PING ERROR] #{e.message}"
     end
   end
 end
