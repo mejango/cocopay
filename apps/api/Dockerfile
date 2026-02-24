@@ -71,11 +71,8 @@ CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
 # Production stage (last — Railway builds this by default)
 FROM base AS production
 
-# Enable jemalloc for reduced memory usage
 ENV RAILS_ENV="production" \
-    BUNDLE_WITHOUT="development test" \
-    LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2 \
-    MALLOC_ARENA_MAX=2
+    BUNDLE_WITHOUT="development test"
 
 # Copy built artifacts
 COPY --from=build /app /app
