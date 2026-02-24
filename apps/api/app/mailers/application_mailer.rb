@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "noreply@cocopay.app"
+  default from: ENV.fetch("MAILER_FROM", "noreply@cocopay.biz")
   layout "mailer"
 end

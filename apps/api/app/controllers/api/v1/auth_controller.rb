@@ -22,13 +22,20 @@ module Api
         # In development, log the token for testing
         Rails.logger.info "Magic link token for #{email}: #{result[:token]}" if Rails.env.development?
 
-        # Send email (would be async in production)
-        AuthMailer.magic_link(user, result[:token]).deliver_later
+        # Send email synchronously so we can report delivery errors
+        AuthMailer.magic_link(user, result[:token]).deliver_now
 
         render_success({
           verification_id: result[:verification_id],
           expires_at: result[:expires_at].iso8601
         })
+      rescue Mailgun::Unauthorized, Mailgun::CommunicationError => e
+        Rails.logger.error "Mailgun delivery failed: #{e.message}"
+        render_error(
+          code: "EMAIL_DELIVERY_FAILED",
+          message: "Failed to send email. Please try again later.",
+          status: :service_unavailable
+        )
       rescue ActiveRecord::RecordInvalid => e
         render_error(
           code: "VALIDATION_ERROR",
