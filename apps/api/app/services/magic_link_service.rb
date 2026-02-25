@@ -6,7 +6,7 @@ class MagicLinkService
   class << self
     def generate(user)
       verification_id = SecureRandom.uuid
-      token = SecureRandom.hex(32)
+      token = SecureRandom.random_number(10**6).to_s.rjust(6, "0")
       expires_at = Time.current + EXPIRY_SECONDS.seconds
 
       redis.set(

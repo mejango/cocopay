@@ -1,18 +1,2 @@
-<h1>Sign in to CocoPay</h1>
-
-<p>Hello<%= @user.name.present? ? " #{@user.name}" : "" %>,</p>
-
-<p>Click the button below to sign in to your CocoPay account:</p>
-
-<p>
-  <a href="<%= @url %>" class="button">Sign In</a>
-</p>
-
-<p>Or copy and paste this link into your browser:</p>
-<p><%= @url %></p>
-
-<p>This link will expire in 5 minutes.</p>
-
-<p>If you didn't request this email, you can safely ignore it.</p>
-
-<p>— The CocoPay Team</p>
+<p>Your CocoPay sign-in code is: <strong><%= @code %></strong></p>
+<p>It expires in 5 minutes. If you didn't request this, ignore this email.</p>
