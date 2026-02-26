@@ -118,12 +118,45 @@ RPC_OVERRIDES=8453:https://base-mainnet.g.alchemy.com/v2/xxx
 # Relayr API base URL
 RELAYR_API_URL=https://api.relayr.ba5ed.com
 
-# No API key needed (permissionless)
+# Relayr API key (for production balance bundles)
+RELAYR_API_KEY=your-relayr-api-key
+
+# Relayr staging API key (for testnet deploys)
+RELAYR_STAGING_API_KEY=0717579b-c72a-4da8-a7ba-c95944db4e7f
 ```
 
 | Variable | Required | Secret | Example |
 |----------|----------|--------|---------|
 | `RELAYR_API_URL` | Yes | No | `https://api.relayr...` |
+| `RELAYR_API_KEY` | Yes (prod) | Yes | API key |
+| `RELAYR_STAGING_API_KEY` | No | No | UUID |
+
+---
+
+### Smart Account Provisioning
+
+```bash
+# Keccak256 of the ForwardableSimpleAccountFactory's proxy init code.
+# Required for computing counterfactual smart account addresses.
+# Derive from the factory contract at 0x69a05d911af23501ff9d6b811a97cac972dade05.
+FACTORY_INIT_CODE_HASH=0x...
+```
+
+| Variable | Required | Secret | Example |
+|----------|----------|--------|---------|
+| `FACTORY_INIT_CODE_HASH` | Yes | No | `0x...` (64-char hex) |
+
+### Contract Deployment
+
+```bash
+# Private key for deploying CocoPayRouter via CREATE2
+# Only needed for initial deployment, not runtime
+DEPLOYER_PRIVATE_KEY=0x...
+```
+
+| Variable | Required | Secret | Example |
+|----------|----------|--------|---------|
+| `DEPLOYER_PRIVATE_KEY` | Deploy only | Yes | `0x...` |
 
 ---
 

@@ -104,6 +104,53 @@ curl https://api-staging.cocopay.app/health/ready
 
 ---
 
+## CocoPayRouter Contract Deployment
+
+The `CocoPayRouter` is deployed via CREATE2 with salt `0xC0C0` for deterministic addresses across all chains.
+
+### Prerequisites
+
+- Foundry installed (`curl -L https://foundry.paradigm.xyz | bash && foundryup`)
+- Deployer private key with ETH on each target chain
+- RPC URLs for target chains
+
+### Deploy to a Chain
+
+```bash
+cd contracts
+
+# Base mainnet
+DEPLOYER_PRIVATE_KEY=0x... forge script script/DeployRouter.s.sol \
+  --rpc-url https://base.publicnode.com \
+  --broadcast --verify
+
+# Optimism
+DEPLOYER_PRIVATE_KEY=0x... forge script script/DeployRouter.s.sol \
+  --rpc-url https://optimism.publicnode.com \
+  --broadcast --verify
+
+# Arbitrum
+DEPLOYER_PRIVATE_KEY=0x... forge script script/DeployRouter.s.sol \
+  --rpc-url https://arbitrum-one.publicnode.com \
+  --broadcast --verify
+```
+
+### Verify Deployment
+
+```bash
+# The address should be the same on all chains
+cast call $ROUTER_ADDRESS "TERMINAL()(address)" --rpc-url https://base.publicnode.com
+cast call $ROUTER_ADDRESS "PERMIT2()(address)" --rpc-url https://base.publicnode.com
+```
+
+### After Deployment
+
+1. Update `COCOPAY_ROUTER` constant in `apps/mobile/src/constants/juicebox.ts`
+2. Update `docs/ENV.md` with the router address
+3. Verify on block explorers for each chain
+
+---
+
 ## Staging Deployment
 
 ### Automated (via GitHub Actions)

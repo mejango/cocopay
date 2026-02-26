@@ -50,16 +50,25 @@ module Api
 
         result = MagicLinkService.verify(verification_id, token)
 
+        if result == :too_many_attempts
+          return render_error(
+            code: "TOO_MANY_ATTEMPTS",
+            message: "Too many failed attempts. Please request a new code.",
+            status: :too_many_requests
+          )
+        end
+
         unless result
           return render_error(
             code: "UNAUTHORIZED",
-            message: "Invalid or expired verification link",
+            message: "Invalid or expired verification code",
             status: :unauthorized
           )
         end
 
         user = result[:user]
         user.update!(email_verified_at: Time.current) unless user.email_verified_at
+        SmartAccountProvisionService.ensure_smart_account(user)
 
         session = create_session(user, auth_method: "email")
         jwt = JwtService.encode({ user_id: user.id, session_id: session.id })
@@ -112,6 +121,7 @@ module Api
 
         verified_address = result[:address]
         user = User.find_or_create_by!(wallet_address: verified_address)
+        SmartAccountProvisionService.ensure_smart_account(user)
 
         session = create_session(user, auth_method: "wallet")
         jwt = JwtService.encode({ user_id: user.id, session_id: session.id })

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, TextInput, Alert, Platform, ScrollView, useWindowDimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Alert, Platform, ScrollView, useWindowDimensions, Image, ActivityIndicator } from 'react-native';
 import { useState, useEffect, useMemo } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -6,9 +6,12 @@ import { spacing, typography, useTheme } from '../src/theme';
 import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
 import { useBalanceStore } from '../src/stores/balance';
-import { buildPayTransaction, formatTransactionForDisplay } from '../src/services/terminal';
-import { NATIVE_TOKEN } from '../src/constants/juicebox';
+import { usePayment } from '../src/hooks/usePayment';
+import type { SelectedToken } from '../src/hooks/usePayment';
+import { storesApi } from '../src/api/stores';
+import type { StoreDetails } from '../src/api/stores';
 import type { Revnet } from '../src/types/revnet';
+import { COCOPAY_ROUTER } from '../src/constants/juicebox';
 
 interface PayableToken {
   id: string;
@@ -72,10 +75,20 @@ export default function PaymentScreen() {
   const isMobile = width < 600;
 
   const [amount, setAmount] = useState(params.amount || '');
-  const [isLoading, setIsLoading] = useState(false);
   const [tokenAmounts, setTokenAmounts] = useState<Record<string, string>>({});
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
+  const [storeDetails, setStoreDetails] = useState<StoreDetails | null>(null);
+
+  const { status: paymentStatus, confirmationCode, txHash, error: paymentError, pay, reset } = usePayment();
+  const isActive = paymentStatus !== 'idle' && paymentStatus !== 'failed' && paymentStatus !== 'completed';
+
+  // Fetch store details on mount (need owner_address and deployments)
+  useEffect(() => {
+    if (params.storeId) {
+      storesApi.get(params.storeId).then(setStoreDetails).catch(console.error);
+    }
+  }, [params.storeId]);
 
   // Auto-select first token when user enters an amount
   useEffect(() => {
@@ -104,6 +117,8 @@ export default function PaymentScreen() {
   const isBalanced = Math.abs(selectedTotal - targetAmount) < 0.01;
 
   const handleDismiss = () => {
+    if (isActive) return;
+    reset();
     router.back();
   };
 
@@ -120,49 +135,129 @@ export default function PaymentScreen() {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      // Build transactions for each selected token
-      const transactions = selectedIds
-        .filter(id => parseFloat(tokenAmounts[id] || '0') > 0)
-        .map(id => {
-          const token = payableTokens.find(t => t.id === id);
-          if (!token) return null;
-
-          const tokenAmount = parseFloat(tokenAmounts[id] || '0');
-          const amountWei = BigInt(Math.floor(tokenAmount * 1e18));
-
-          // For MVP: just show the transaction details
-          // In production, this would go through WalletConnect
-          return buildPayTransaction(
-            {
-              projectId: token.projectId,
-              token: NATIVE_TOKEN, // Pay with ETH
-              amount: amountWei,
-              beneficiary: walletAddress,
-              memo: `CocoPay: ${params.storeName || 'Payment'}`,
-            },
-            token.chainId
-          );
-        })
-        .filter(Boolean);
-
-      if (transactions.length === 0) {
-        Alert.alert(t('payment.errorTitle'), t('payment.errorNoTransaction'));
-        return;
-      }
-
-      // For MVP: show transaction details
-      const txDisplay = transactions.map(tx => formatTransactionForDisplay(tx!)).join('\n\n');
-      Alert.alert(
-        t('payment.txPreparedTitle'),
-        t('payment.txPreparedMessage', { details: txDisplay }),
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    } finally {
-      setIsLoading(false);
+    if (!storeDetails?.owner_address) {
+      Alert.alert(t('payment.errorTitle'), 'Store owner address not available');
+      return;
     }
+
+    if (!storeDetails.deployments || storeDetails.deployments.length === 0) {
+      Alert.alert(t('payment.errorTitle'), 'Store has no active deployments');
+      return;
+    }
+
+    // Pick the first deployment (or match by chainId if user selects one)
+    const deployment = storeDetails.deployments[0];
+
+    // Build selected tokens for the hook
+    const selectedTokens: SelectedToken[] = selectedIds
+      .filter(id => parseFloat(tokenAmounts[id] || '0') > 0)
+      .map(id => {
+        const token = payableTokens.find(t => t.id === id);
+        if (!token) return null;
+        const amountUsd = parseFloat(tokenAmounts[id] || '0');
+        const revnet = revnets.find(r => `${r.chainId}-${r.projectId}` === id);
+
+        // If this token matches the store's own revnet, it's a store token payment
+        // Otherwise, treat as USDC (user's other revnet tokens get cashed out to USDC first)
+        const isStoreToken = revnet && deployment.project_id === revnet.projectId;
+
+        return {
+          type: isStoreToken ? 'store_token' : 'usdc',
+          amountUsd,
+          revnet,
+        } as SelectedToken;
+      })
+      .filter((t): t is SelectedToken => t !== null);
+
+    if (selectedTokens.length === 0) return;
+
+    await pay({
+      storeId: params.storeId,
+      amountUsd: payAmount,
+      chainId: deployment.chain_id,
+      ownerAddress: storeDetails.owner_address,
+      deployment,
+      selectedTokens,
+      beneficiary: walletAddress,
+    });
   };
+
+  // Status overlay for active payment states
+  if (paymentStatus === 'building' || paymentStatus === 'submitting') {
+    return (
+      <PageContainer>
+        <View style={[styles.container, styles.overlayCenter]}>
+          <ActivityIndicator size="large" color={theme.colors.accent} />
+          <Text style={styles.overlayText}>
+            {paymentStatus === 'building' ? 'Preparing payment...' : 'Submitting...'}
+          </Text>
+        </View>
+      </PageContainer>
+    );
+  }
+
+  if (paymentStatus === 'processing') {
+    return (
+      <PageContainer>
+        <View style={[styles.container, styles.overlayCenter]}>
+          <ActivityIndicator size="large" color={theme.colors.accent} />
+          <Text style={styles.overlayText}>Processing payment</Text>
+          {confirmationCode && (
+            <Text style={styles.confirmationCode}>{confirmationCode}</Text>
+          )}
+          <Text style={styles.overlaySubtext}>This may take a moment...</Text>
+        </View>
+      </PageContainer>
+    );
+  }
+
+  if (paymentStatus === 'completed') {
+    return (
+      <PageContainer>
+        <View style={[styles.container, styles.overlayCenter]}>
+          <Text style={styles.checkmark}>&#10003;</Text>
+          <Text style={styles.overlayText}>Payment complete</Text>
+          {confirmationCode && (
+            <Text style={styles.confirmationCode}>{confirmationCode}</Text>
+          )}
+          {txHash && (
+            <Text style={styles.overlaySubtext}>TX: {txHash.slice(0, 10)}...{txHash.slice(-6)}</Text>
+          )}
+          <Pressable
+            style={({ pressed }) => [styles.payButton, { marginTop: spacing[6] }, pressed && styles.buttonPressed]}
+            onPress={() => { reset(); router.back(); }}
+          >
+            <Text style={styles.payButtonText}>Done</Text>
+          </Pressable>
+        </View>
+      </PageContainer>
+    );
+  }
+
+  if (paymentStatus === 'failed') {
+    return (
+      <PageContainer>
+        <View style={[styles.container, styles.overlayCenter]}>
+          <Text style={[styles.overlayText, { color: theme.colors.accentSecondary }]}>Payment failed</Text>
+          {paymentError && (
+            <Text style={styles.overlaySubtext}>{paymentError}</Text>
+          )}
+          <Pressable
+            style={({ pressed }) => [styles.payButton, { marginTop: spacing[6] }, pressed && styles.buttonPressed]}
+            onPress={reset}
+          >
+            <Text style={styles.payButtonText}>Try Again</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [{ marginTop: spacing[3] }, pressed && styles.buttonPressed]}
+            onPress={() => { reset(); router.back(); }}
+          >
+            <Text style={[styles.overlaySubtext, { textDecorationLine: 'underline' }]}>Go back</Text>
+          </Pressable>
+        </View>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -193,7 +288,6 @@ export default function PaymentScreen() {
               placeholder="$0.00"
               placeholderTextColor={theme.colors.textMuted}
               keyboardType="decimal-pad"
-              editable={!isLoading}
             />
           </View>
 
@@ -214,6 +308,40 @@ export default function PaymentScreen() {
                 <Text style={styles.noTokensSubtext}>
                   {t('payment.noTokensSub')}
                 </Text>
+                {/* External payer info: show when no tokens available */}
+                {storeDetails?.deployments?.[0] && (
+                  <View style={styles.externalPayInfo}>
+                    <Text style={styles.externalPayLabel}>Pay with external wallet</Text>
+                    {storeDetails.owner_address && (
+                      <View style={styles.externalPayRow}>
+                        <Text style={styles.externalPayKey}>Owner</Text>
+                        <Text style={styles.externalPayValue} selectable>
+                          {storeDetails.owner_address.slice(0, 6)}...{storeDetails.owner_address.slice(-4)}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.externalPayRow}>
+                      <Text style={styles.externalPayKey}>Project ID</Text>
+                      <Text style={styles.externalPayValue} selectable>
+                        {storeDetails.deployments[0].project_id}
+                      </Text>
+                    </View>
+                    <View style={styles.externalPayRow}>
+                      <Text style={styles.externalPayKey}>Chain</Text>
+                      <Text style={styles.externalPayValue}>
+                        {storeDetails.deployments[0].chain_id}
+                      </Text>
+                    </View>
+                    {COCOPAY_ROUTER && (
+                      <View style={styles.externalPayRow}>
+                        <Text style={styles.externalPayKey}>Router</Text>
+                        <Text style={styles.externalPayValue} selectable>
+                          {COCOPAY_ROUTER.slice(0, 6)}...{COCOPAY_ROUTER.slice(-4)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
             ) : (
               payableTokens.map((token) => {
@@ -276,13 +404,13 @@ export default function PaymentScreen() {
             style={({ pressed }) => [
               styles.payButton,
               pressed && styles.buttonPressed,
-              isLoading && styles.buttonDisabled,
+              isActive && styles.buttonDisabled,
             ]}
             onPress={handlePay}
-            disabled={isLoading}
+            disabled={isActive}
           >
             <Text style={styles.payButtonText}>
-              {isLoading ? t('payment.processing') : t('payment.pay')}
+              {t('payment.pay')}
             </Text>
           </Pressable>
         </View>
@@ -496,6 +624,74 @@ function useStyles(t: BrandTheme) {
       color: t.colors.accentText,
       fontSize: t.typography.sizes.xl,
       fontWeight: t.typography.weights.bold,
+    },
+    overlayCenter: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing[6],
+    },
+    overlayText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+      marginTop: spacing[4],
+      textAlign: 'center',
+    },
+    overlaySubtext: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+      marginTop: spacing[2],
+      textAlign: 'center',
+    },
+    confirmationCode: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: 48,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.accent,
+      marginTop: spacing[4],
+      letterSpacing: 8,
+      textAlign: 'center',
+    },
+    checkmark: {
+      fontSize: 64,
+      color: t.colors.accent,
+    },
+    externalPayInfo: {
+      marginTop: spacing[4],
+      padding: spacing[3],
+      backgroundColor: t.colors.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      borderRadius: t.borderRadius.sm,
+      width: '100%',
+    },
+    externalPayLabel: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.textSecondary,
+      letterSpacing: 1,
+      marginBottom: spacing[2],
+      textTransform: 'uppercase',
+    },
+    externalPayRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: spacing[1],
+    },
+    externalPayKey: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+    },
+    externalPayValue: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.semibold,
+      color: t.colors.text,
     },
   }), [t.key]);
 }

@@ -79,6 +79,30 @@ class RelayrService
       get_from_relayr("/v1/bundle/#{bundle_id}", staging: true)
     end
 
+    # Create a balance bundle with pre-signed ForwardRequest calldata.
+    # Used for self-custody users who sign ForwardRequests client-side.
+    def create_balance_bundle_with_signed_requests(signed_requests:)
+      validate_config!
+
+      bundle_transactions = signed_requests.map do |req|
+        {
+          chain: req[:chain_id] || req["chain_id"],
+          target: ERC2771_FORWARDER,
+          data: req[:data] || req["data"],
+          value: "0"
+        }
+      end
+
+      response = post_to_relayr("/v1/bundle/balance", {
+        app_id: RELAYR_APP_ID,
+        transactions: bundle_transactions,
+        perform_simulation: true,
+        virtual_nonce_mode: "Disabled"
+      })
+
+      { bundle_id: response["bundle_uuid"], tx_uuids: response["tx_uuids"] }
+    end
+
     # Get bundle status
     def get_bundle_status(bundle_id)
       get_from_relayr("/v1/bundle/#{bundle_id}")
@@ -142,18 +166,80 @@ class RelayrService
     end
 
     def sign_forward_request(account:, chain_id:, target:, data:, value:)
-      # This is a simplified version - in production, would need to:
-      # 1. Query forwarder nonce on-chain
-      # 2. Build EIP-712 typed data
-      # 3. Sign with account
-      # For now, we build the transaction targeting the forwarder directly
+      # Build EIP-712 ForwardRequest
+      request = {
+        from: account.address.to_s,
+        to: target,
+        value: value.to_i,
+        gas: 500_000,
+        nonce: fetch_forwarder_nonce(account.address.to_s, chain_id),
+        deadline: (Time.current + 1.hour).to_i,
+        data: data
+      }
+
+      # Sign with EIP-712
+      result = Eip712Service.sign_forward_request(
+        key: account,
+        chain_id: chain_id,
+        request: request
+      )
+
+      # Encode forwarder.execute(ForwardRequestData) calldata
+      execute_calldata = Eip712Service.encode_execute_calldata(request, result[:signature])
 
       {
         chain: chain_id,
         target: ERC2771_FORWARDER,
-        data: data,
-        value: value
+        data: execute_calldata,
+        value: "0"
       }
+    end
+
+    def fetch_forwarder_nonce(from_address, chain_id)
+      # Query the forwarder's nonce for this address on-chain
+      # nonces(address) selector = 0x7ecebe00
+      selector = "7ecebe00"
+      padded_address = from_address.sub("0x", "").downcase.rjust(64, "0")
+      call_data = "0x#{selector}#{padded_address}"
+
+      rpc_url = rpc_url_for_chain(chain_id)
+      return 0 unless rpc_url
+
+      conn = Faraday.new(url: rpc_url) do |f|
+        f.request :json
+        f.response :json
+        f.adapter Faraday.default_adapter
+      end
+
+      response = conn.post("/") do |req|
+        req.body = {
+          jsonrpc: "2.0",
+          method: "eth_call",
+          params: [{ to: ERC2771_FORWARDER, data: call_data }, "latest"],
+          id: 1
+        }.to_json
+      end
+
+      result = response.body["result"]
+      return 0 unless result
+
+      result.sub("0x", "").to_i(16)
+    rescue StandardError => e
+      Rails.logger.warn "Failed to fetch forwarder nonce: #{e.message}"
+      0
+    end
+
+    def rpc_url_for_chain(chain_id)
+      {
+        1 => "https://ethereum.publicnode.com",
+        10 => "https://optimism.publicnode.com",
+        8453 => "https://base.publicnode.com",
+        42161 => "https://arbitrum-one.publicnode.com",
+        11155111 => "https://ethereum-sepolia.publicnode.com",
+        11155420 => "https://optimism-sepolia.publicnode.com",
+        84532 => "https://base-sepolia.publicnode.com",
+        421614 => "https://arbitrum-sepolia.publicnode.com"
+      }[chain_id.to_i]
     end
 
     def post_to_relayr(path, body, staging: false)

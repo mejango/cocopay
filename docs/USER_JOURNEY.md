@@ -22,11 +22,22 @@ Anyone who creates a store. Local businesses wanting easy payments and customer 
 
 ## Account Model
 
+### Three Payer Types
+
+| Type | Auth | On-chain identity | Signing | Gas |
+|------|------|-------------------|---------|-----|
+| **Managed** (email) | Magic link | Smart account | Server signs ForwardRequest | Org pays |
+| **Self-custody** (wallet) | SIWE | Smart account | User signs ForwardRequest | Org pays |
+| **External** (no account) | None | User's EOA | User signs tx directly | User pays |
+
+Both managed and self-custody users get a `ForwardableSimpleAccount` provisioned on login. This smart account is the on-chain identity for all payment operations. External users (no CocoPay account) can pay via the `CocoPayRouter` contract directly.
+
 ### Users vs Stores
 
 **Users** are people. Each person has one account with:
 - Personal balance (their tokens and USDC)
-- Authentication (phone, passkey, wallet)
+- Smart account (provisioned on first login)
+- Authentication (email OTP or wallet SIWE)
 - Can pay, receive, and spend anywhere
 
 **Stores** are businesses. Each store is a separate entity with:

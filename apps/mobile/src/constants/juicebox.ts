@@ -4,8 +4,37 @@ export const JB_MULTI_TERMINAL = '0x2db6d704058e552defe415753465df8df0361846' as
 export const JB_TOKENS = '0x4d0edd347fb1fa21589c1e109b3474924be87636' as const;
 export const NATIVE_TOKEN = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' as const;
 
+// USDC addresses per chain (decimals = 6)
+export const USDC_ADDRESSES: Record<number, string> = {
+  // Mainnets
+  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  10: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
+  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  // Testnets
+  11155111: '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238',
+  11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',
+  84532: '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
+  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
+};
+
+export const USDC_DECIMALS = 6;
+
 // Default wallet address for this app (breadfruit.eth)
 export const DEFAULT_WALLET_ADDRESS = '0x21a8c5f5666EC3b786585EABc311D9de18A5Db6C' as const;
+
+// ERC-2771 Forwarder (same on all chains)
+export const ERC2771_FORWARDER = '0xc29d6995ab3b0df4650ad643adeac55e7acbb566' as const;
+
+// ForwardableSimpleAccountFactory (same on all chains)
+export const SMART_ACCOUNT_FACTORY = '0x69a05d911af23501ff9d6b811a97cac972dade05' as const;
+
+// Permit2 (same on all chains)
+export const PERMIT2 = '0x000000000022D473030F116dDEE9F6B43aC78BA3' as const;
+
+// CocoPayRouter (deployed via CREATE2 — same on all chains)
+// TODO: Populate after deployment
+export const COCOPAY_ROUTER: string = '';
 
 // Bendystraw GraphQL API endpoint
 export const BENDYSTRAW_API_KEY = '3ZNJpGtazh5fwYoSW59GWDEj';

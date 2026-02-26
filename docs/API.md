@@ -8,9 +8,8 @@
 
 | Environment | URL |
 |-------------|-----|
-| Local | `http://localhost:3000/api/v1` |
-| Staging | `https://api-staging.cocopay.app/api/v1` |
-| Production | `https://api.cocopay.app/api/v1` |
+| Local | `http://localhost:3000/v1` |
+| Production | `https://api.cocopay.biz/v1` |
 
 ---
 
@@ -21,7 +20,7 @@ All authenticated endpoints require:
 Authorization: Bearer <jwt_token>
 ```
 
-Tokens are obtained via `/auth/session` after email/passkey verification.
+Tokens are obtained via `/auth/email/verify` (email OTP) or `/auth/wallet/siwe` (wallet sign-in).
 
 ---
 
@@ -66,6 +65,7 @@ Tokens are obtained via `/auth/session` after email/passkey verification.
 | `BUNDLE_FAILED` | 500 | Relayr bundle submission failed |
 | `RPC_ERROR` | 503 | Blockchain RPC unavailable |
 | `RATE_LIMITED` | 429 | Too many requests |
+| `TOO_MANY_ATTEMPTS` | 429 | Too many failed OTP attempts |
 
 ---
 
@@ -96,13 +96,13 @@ Send magic link to email address.
 ---
 
 #### `POST /auth/email/verify`
-Verify magic link and create session.
+Verify 6-digit OTP code and create session.
 
 **Request:**
 ```json
 {
   "verification_id": "abc123",
-  "token": "magic-link-token"
+  "token": "482916"
 }
 ```
 
@@ -123,15 +123,13 @@ Verify magic link and create session.
 
 ---
 
-#### `POST /auth/passkey/register`
-Register a new passkey for the authenticated user.
+#### `POST /auth/wallet/nonce`
+Request a nonce for SIWE (Sign-In with Ethereum) authentication.
 
 **Request:**
 ```json
 {
-  "credential_id": "base64...",
-  "public_key": "base64...",
-  "attestation": "base64..."
+  "address": "0x1234...abcd"
 }
 ```
 
@@ -139,23 +137,22 @@ Register a new passkey for the authenticated user.
 ```json
 {
   "data": {
-    "passkey_id": "pk_123",
-    "created_at": "2026-02-16T12:00:00Z"
+    "nonce": "a1b2c3d4e5f6"
   }
 }
 ```
 
 ---
 
-#### `POST /auth/passkey/authenticate`
-Authenticate with passkey.
+#### `POST /auth/wallet/siwe`
+Verify SIWE signature and create session.
 
 **Request:**
 ```json
 {
-  "credential_id": "base64...",
-  "signature": "base64...",
-  "client_data": "base64..."
+  "address": "0x1234...abcd",
+  "message": "cocopay.biz wants you to sign in...",
+  "signature": "0x..."
 }
 ```
 
@@ -164,30 +161,12 @@ Authenticate with passkey.
 {
   "data": {
     "token": "eyJ...",
-    "user": { ... }
-  }
-}
-```
-
----
-
-#### `POST /auth/wallet/link`
-Link a passkey-derived wallet to the user's smart account.
-
-**Request:**
-```json
-{
-  "derived_address": "0x...",
-  "encrypted_signing_key": "base64..."
-}
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "smart_account_address": "0x...",
-    "chains": [1, 10, 8453, 42161]
+    "user": {
+      "id": "user_123",
+      "wallet_address": "0x1234...abcd",
+      "created_at": "2026-02-16T12:00:00Z"
+    },
+    "is_new_user": true
   }
 }
 ```
@@ -455,8 +434,67 @@ Preview a payment (calculate token mix, fees, rewards).
 
 ---
 
+#### `POST /payments/execute`
+Execute a payment with client-built calldata. Supports three flows:
+
+- **Managed (email users)**: Send raw `transactions` calldata. Backend wraps in SmartAccount.execute, signs ForwardRequest server-side, submits Relayr balance bundle.
+- **Self-custody (wallet users)**: Send `transactions` + `signed_forward_requests`. Client signs ForwardRequests via `signTypedData`. Backend submits pre-signed calldata to Relayr.
+- **External (no CocoPay account)**: Call `CocoPayRouter.payProject()` directly on-chain (no API needed).
+
+**Request:**
+```json
+{
+  "store_id": "store_456",
+  "amount_usd": 45.00,
+  "chain_id": 8453,
+  "tokens_used": [
+    {
+      "type": "usdc",
+      "token_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "amount_usd": "45.00",
+      "amount_raw": "45000000"
+    }
+  ],
+  "transactions": [
+    {
+      "chain_id": 8453,
+      "target": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "data": "0x095ea7b3...",
+      "value": "0"
+    },
+    {
+      "chain_id": 8453,
+      "target": "0x2dB6d704058E552DeFE415753465df8dF0361846",
+      "data": "0x1ebc4c91...",
+      "value": "0"
+    }
+  ],
+  "signed_forward_requests": [
+    {
+      "chain_id": 8453,
+      "data": "0xd5aeaba5..."
+    }
+  ]
+}
+```
+
+The `signed_forward_requests` field is **optional**. Omit it for managed users (backend signs). Include it for self-custody users (client signs via `signTypedData`).
+
+**Response:**
+```json
+{
+  "data": {
+    "id": "tx_123",
+    "status": "pending",
+    "confirmation_code": "A7B3C9"
+  }
+}
+```
+
+---
+
 #### `POST /payments`
-Execute a payment.
+Execute a payment (legacy — use `/payments/execute` instead).
 
 **Request:**
 ```json
@@ -803,7 +841,7 @@ Execute consolidation.
 
 ## WebSocket Events
 
-Connect to: `wss://api.cocopay.app/cable`
+Connect to: `wss://api.cocopay.biz/cable`
 
 ### Channels
 
@@ -876,13 +914,15 @@ Subscribe to balance updates.
 
 ## Rate Limits
 
+Enforced via `rack-attack` with Redis-backed counters per IP.
+
 | Endpoint Pattern | Limit |
 |------------------|-------|
-| `/auth/*` | 10/min |
-| `/payments/*` | 30/min |
-| `/stores/*` | 60/min |
-| `/my-store/*` | 60/min |
-| All others | 120/min |
+| `/auth/email/send` | 5/min per IP |
+| `/auth/email/verify` | 5/min per IP |
+| `/auth/wallet/*` | 10/min per IP |
+
+Additionally, OTP verification is limited to 5 attempts per `verification_id`. After 5 wrong codes, the OTP is invalidated and the user must request a new one.
 
 Rate limit headers:
 ```

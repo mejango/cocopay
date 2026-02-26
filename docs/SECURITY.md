@@ -78,114 +78,99 @@
 
 ## Authentication Security
 
-### Passkey (WebAuthn)
+### Email OTP (Magic Link)
 
-```typescript
-// Registration
-const challenge = crypto.randomBytes(32)
-const options = {
-  challenge,
-  rp: { name: 'CocoPay', id: 'cocopay.app' },
-  user: { id: userId, name: userPhone, displayName: 'CocoPay User' },
-  pubKeyCredParams: [
-    { alg: -7, type: 'public-key' },   // ES256
-    { alg: -257, type: 'public-key' }, // RS256
-  ],
-  authenticatorSelection: {
-    authenticatorAttachment: 'platform',
-    userVerification: 'required',
-    residentKey: 'required',
-  },
-  attestation: 'none',
-}
-
-// Verification
-const verified = await verifyAuthenticationResponse({
-  response: credential,
-  expectedChallenge: storedChallenge,
-  expectedOrigin: 'https://cocopay.app',
-  expectedRPID: 'cocopay.app',
-  authenticator: storedCredential,
-})
-```
+1. User submits email → `POST /v1/auth/email/send`
+2. Server generates a 6-digit numeric code, stores `SHA256(code)` in Redis with 5-minute TTL
+3. Code is emailed to the user via Mailgun
+4. User submits code → `POST /v1/auth/email/verify` with `{verification_id, token}`
+5. Server verifies hash match, creates a `Session` record, returns a JWT (HS256, 30-day expiry)
 
 **Protections:**
-- User verification required (biometric/PIN)
-- Platform authenticator preferred (device-bound)
-- Challenge is single-use, expires in 5 minutes
-- Origin/RPID validation prevents phishing
+- OTP is hashed (SHA-256) before storage — Redis never holds the plaintext code
+- Single-use: Redis key deleted on successful verification
+- 5-minute expiry via Redis TTL
+- **Rate limiting**: `rack-attack` throttles to 5 requests/min per IP on send and verify endpoints
+- **Attempt limiting**: After 5 failed verification attempts per `verification_id`, the OTP is invalidated
+
+### Wallet Sign-In (SIWE)
+
+1. App requests nonce → `POST /v1/auth/wallet/nonce` with `{address}`
+2. Server stores nonce in Redis with 5-minute TTL
+3. App builds SIWE message, user signs with wallet → `POST /v1/auth/wallet/siwe`
+4. Server recovers signer from signature, validates nonce match, creates Session + JWT
+
+**Protections:**
+- Nonce is single-use, 5-minute TTL
+- Signature recovery validates wallet ownership
+- Rate limited to 10 requests/min per IP
 
 ### Session Management
 
-```typescript
-interface Session {
-  id: string
-  userId: string
-  token: string           // Cryptographically random
-  ipAddress: string       // For anomaly detection
-  userAgent: string       // For anomaly detection
-  createdAt: Date
-  expiresAt: Date         // 7 days for mobile, 24h for web
-  lastActivityAt: Date
-}
-
-// Session creation
-const session = {
-  id: crypto.randomUUID(),
-  userId,
-  token: crypto.randomBytes(32).toString('base64url'),
-  ipAddress: request.ip,
-  userAgent: request.headers['user-agent'],
-  createdAt: new Date(),
-  expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  lastActivityAt: new Date(),
-}
-
-// Session validation
-const session = await db.sessions.findOne({ token: bearerToken })
-
-if (!session || session.expiresAt < new Date()) {
-  throw new UnauthorizedError()
-}
-
-// Refresh last activity
-await db.sessions.update({
-  id: session.id,
-  lastActivityAt: new Date(),
-})
-```
+- Sessions are stored in PostgreSQL (`sessions` table) with `user_id`, `auth_method`, `expires_at`, `revoked_at`, `ip_address`, `device_info`
+- JWTs contain `user_id` and `session_id` claims
+- **Every authenticated request** checks both JWT validity AND session liveness (`session.active?`)
+- Logout revokes the session (`revoked_at` timestamp), immediately invalidating the JWT
+- Sessions expire after 30 days
 
 **Protections:**
-- Tokens are 256-bit cryptographically random
-- Sessions stored server-side (not JWTs)
-- IP/UserAgent logged for anomaly detection
-- Sliding expiration with activity refresh
-- All sessions revocable by user
+- JWT alone is not sufficient — session must be active (not revoked, not expired)
+- IP address and user agent logged per session for anomaly detection
+- All sessions revocable by user via logout
 
 ---
+
+## Unified Smart Account Model
+
+Both managed (email) and self-custody (wallet) users receive a `ForwardableSimpleAccount` on login. The account is provisioned counterfactually (address computed via CREATE2, no on-chain deploy until first use).
+
+### How It Works
+
+| Payer type | Owner of smart account | Who signs ForwardRequest | Gas payment |
+|------------|----------------------|--------------------------|-------------|
+| Managed | Server-held `SigningKey` | Backend (`Eip712Service`) | Org via Relayr balance bundle |
+| Self-custody | User's wallet address | User via `signTypedData` in browser | Org via Relayr balance bundle |
+| External | N/A (no smart account) | User signs tx directly | User pays gas |
+
+### ERC-2771 ForwardRequest Signing
+
+All smart account transactions are routed through the OpenZeppelin `ERC2771Forwarder` (`0xc29d...`). The forwarder validates the EIP-712 signature and calls the smart account's `execute(target, value, data)` on behalf of the signer.
+
+**Managed flow (server signs):**
+1. Client sends raw calldata (approve, pay, transfer)
+2. Backend wraps each call in `SmartAccount.execute()` calldata
+3. Backend builds EIP-712 `ForwardRequest` typed data
+4. Backend signs with user's `SigningKey` (decrypted from DB)
+5. Backend encodes `forwarder.execute(ForwardRequestData, signature)`
+6. Submits to Relayr as balance bundle
+
+**Self-custody flow (user signs):**
+1. Client builds calldata and wraps in `SmartAccount.execute()`
+2. Client presents EIP-712 `ForwardRequest` via `signTypedData` (wallet popup)
+3. Client encodes `forwarder.execute()` calldata with user's signature
+4. Client sends `signed_forward_requests` to backend
+5. Backend submits pre-signed calldata to Relayr
+
+### Key Storage for Managed Users
+
+Signing keys are encrypted with `ActiveSupport::MessageEncryptor` using a key derived from `SECRET_KEY_BASE` via `ActiveSupport::KeyGenerator`. Each managed user gets a unique `Eth::Key`, with the private key encrypted at rest in the `signing_keys` table.
 
 ## Managed Wallet Security
 
 ### Key Generation and Storage
 
-```typescript
-// Key derivation (from passkey PRF or random)
-const signingKey = await deriveSigningKey(prfOutput) || crypto.randomBytes(32)
+```ruby
+# Key generation (Ruby — SmartAccountProvisionService)
+key = Eth::Key.new
+encryptor = ActiveSupport::MessageEncryptor.new(encryption_key)
+encrypted = encryptor.encrypt_and_sign(key.private_hex)
 
-// Encryption for storage
-const encryptedKey = await encrypt(signingKey, {
-  algorithm: 'AES-256-GCM',
-  key: await getServerEncryptionKey(),  // From HSM
-  iv: crypto.randomBytes(12),
-})
-
-// Storage
-await db.walletKeys.insert({
-  userId,
-  encryptedKey,
-  address: deriveAddress(signingKey),
-  createdAt: new Date(),
-})
+# Storage
+user.signing_keys.create!(
+  encrypted_private_key: encrypted,
+  address: key.address.to_s,
+  is_active: true
+)
 ```
 
 **Key Security:**
@@ -286,29 +271,23 @@ async function exportKey(userId: string, verification: Verification) {
 
 ### Rate Limiting
 
-```typescript
-const rateLimits = {
-  // By IP
-  'ip:global': { limit: 1000, window: '1h' },
-  'ip:auth': { limit: 10, window: '1m' },
+Implemented via `rack-attack` gem with Redis-backed counters.
 
-  // By user
-  'user:global': { limit: 500, window: '1h' },
-  'user:payments': { limit: 50, window: '1h' },
-  'user:cashout': { limit: 5, window: '1h' },
+```ruby
+# config/initializers/rack_attack.rb
+# Email send: 5 req/min per IP
+Rack::Attack.throttle("auth/email/send", limit: 5, period: 60)
+# Email verify: 5 req/min per IP
+Rack::Attack.throttle("auth/email/verify", limit: 5, period: 60)
+# Wallet endpoints: 10 req/min per IP
+Rack::Attack.throttle("auth/wallet", limit: 10, period: 60)
+```
 
-}
+Additionally, OTP verification has per-`verification_id` attempt limiting (5 attempts max) implemented in `MagicLinkService`. After 5 failed attempts, the OTP key is deleted from Redis.
 
-// Implementation
-const rateLimit = async (key: string, config: RateLimitConfig) => {
-  const count = await redis.incr(`ratelimit:${key}`)
-  if (count === 1) {
-    await redis.expire(`ratelimit:${key}`, config.windowSeconds)
-  }
-  if (count > config.limit) {
-    throw new RateLimitError(`Rate limit exceeded for ${key}`)
-  }
-}
+Throttled responses return HTTP 429 with:
+```json
+{ "error": { "code": "RATE_LIMITED", "message": "Too many requests. Please try again later." } }
 ```
 
 ### Input Validation
@@ -333,46 +312,12 @@ app.post('/payments', async (c) => {
 })
 ```
 
-### CORS and CSRF
+### CORS
 
-```typescript
-// CORS configuration
-app.use('*', cors({
-  origin: [
-    'https://cocopay.app',
-    'https://app.cocopay.app',
-    /^capacitor:\/\//,  // Mobile app
-  ],
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowHeaders: ['Authorization', 'Content-Type'],
-  credentials: true,
-}))
+Configured via `rack-cors` gem in `config/initializers/cors.rb`. Allowed origins are set via `CORS_ORIGINS` env var:
 
-// CSRF protection for state-changing operations
-app.use('/api/*', async (c, next) => {
-  if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
-    const origin = c.req.header('origin')
-    if (!allowedOrigins.includes(origin)) {
-      return c.json({ error: 'Invalid origin' }, 403)
-    }
-  }
-  await next()
-})
 ```
-
-### Content Security Policy (Web)
-
-```html
-<meta http-equiv="Content-Security-Policy" content="
-  default-src 'self';
-  script-src 'self';
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' data: https:;
-  connect-src 'self' https://api.cocopay.app wss://api.cocopay.app;
-  frame-ancestors 'none';
-  form-action 'self';
-  base-uri 'self';
-">
+CORS_ORIGINS=https://cocopay.biz,http://cocopay.biz
 ```
 
 ---
@@ -738,10 +683,12 @@ interface AuditLog {
 
 - [ ] Penetration test by third party
 - [ ] Smart contract audit (Juicebox V5 already audited)
-- [ ] Rate limiting tested under load
-- [ ] All secrets in environment variables
+- [x] Rate limiting on auth endpoints (rack-attack)
+- [x] OTP brute-force protection (attempt limiting)
+- [x] Session revocation enforced on every request
+- [x] All secrets in environment variables
 - [ ] No secrets in code or logs
-- [ ] HTTPS everywhere
+- [x] HTTPS everywhere (Railway TLS termination)
 - [ ] Backup and recovery tested
 - [ ] Incident response runbook documented
 

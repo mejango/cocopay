@@ -57,6 +57,43 @@ module Api
         )
       end
 
+      def execute
+        store = Store.find(params[:store_id])
+        amount_usd = params[:amount_usd].to_d
+        chain_id = params[:chain_id].to_i
+
+        transaction = Transaction.create!(
+          from_user: current_user,
+          store: store,
+          transaction_type: "payment",
+          amount_usd: amount_usd,
+          chain_id: chain_id,
+          tokens_used: params[:tokens_used]&.map(&:to_unsafe_h),
+          idempotency_key: SecureRandom.uuid
+        )
+
+        signed_requests = params[:signed_forward_requests]&.map(&:to_unsafe_h)
+
+        PaymentExecutionJob.perform_later(
+          transaction.id,
+          current_user.id,
+          params[:transactions].map(&:to_unsafe_h),
+          signed_requests
+        )
+
+        render_success({
+          id: transaction.id,
+          status: transaction.status,
+          confirmation_code: transaction.confirmation_code
+        }, status: :created)
+      rescue ActiveRecord::RecordInvalid => e
+        render_error(
+          code: "VALIDATION_ERROR",
+          message: e.message,
+          status: :unprocessable_entity
+        )
+      end
+
       def show
         transaction = Transaction.find(params[:id])
 

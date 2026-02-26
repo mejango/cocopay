@@ -46,11 +46,7 @@ class User < ApplicationRecord
   end
 
   def deposit_address
-    if self_custody?
-      wallet_address
-    else
-      smart_accounts.first&.address
-    end
+    smart_accounts.first&.address
   end
 
   private

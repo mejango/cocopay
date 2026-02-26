@@ -503,6 +503,85 @@ Your Balance
 
 ---
 
+## Smart Account & Payment Execution Edge Cases
+
+### 32. Relayr Bundle Timeout
+
+**Scenario**: Relayr balance bundle is submitted but never confirms (RPC issues, gas spike, etc.).
+
+**Current handling**:
+- `BundleStatusJob` polls every 5 seconds, max 60 attempts (5 minutes)
+- After timeout, transaction is marked `failed` with `BUNDLE_TIMEOUT` error
+- User sees "Payment failed" and can retry
+
+**Mitigations**:
+- Show "This is taking longer than usual..." after 30 seconds
+- Allow user to dismiss and check status later via activity feed
+- Backend retries on transient RPC errors before failing
+
+---
+
+### 33. Smart Account Not Yet Deployed
+
+**Scenario**: User's smart account address is computed counterfactually but has never been deployed on-chain. First transaction needs to deploy it.
+
+**Current handling**:
+- The ERC-2771 forwarder + Relayr handles this transparently — the forwarder calls the smart account, and if the account doesn't exist, the call is routed through the factory
+- `SmartAccount.deployed` flag tracks deployment state
+- First successful transaction updates `deployed: true` with `deploy_tx_hash`
+
+**Mitigations**:
+- No user-facing action needed — deployment is lazy and transparent
+- Factory CREATE2 ensures the address matches the pre-computed one
+
+---
+
+### 34. Insufficient Balance in Smart Account
+
+**Scenario**: Managed user's smart account has no USDC balance for a payment.
+
+**Current handling**:
+- The client builds calldata that references the smart account's balance
+- If balance is insufficient, the Relayr simulation will fail
+- Transaction marked `failed` with `EXECUTION_FAILED`
+
+**Mitigations**:
+- Frontend checks balance before building calldata
+- Show "Insufficient balance" error before submitting
+- Guide user to deposit USDC to their smart account address
+
+---
+
+### 35. Self-Custody User Rejects ForwardRequest Signature
+
+**Scenario**: Wallet popup appears for `signTypedData`, user clicks "Reject".
+
+**Current handling**:
+- `signTypedDataAsync` throws an error
+- Payment status set to `failed` with "User rejected signature"
+- No backend call is made
+
+**Mitigations**:
+- Clear error message: "Signature required to complete payment"
+- "Try Again" button re-triggers the signing flow
+
+---
+
+### 36. ForwardRequest Nonce Stale
+
+**Scenario**: User's forwarder nonce changes between building and submitting (another tx confirmed in between).
+
+**Current handling**:
+- Nonce is fetched fresh before each signing
+- If stale, Relayr simulation fails, transaction marked failed
+
+**Mitigations**:
+- Client fetches nonce right before signing (not on page load)
+- Backend also fetches fresh nonce for managed users
+- Retry with updated nonce on nonce-related failures
+
+---
+
 ## Summary: Priority Actions
 
 ### Addressed in Spec

@@ -1693,6 +1693,32 @@ Staff see only what they need:
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### External Payer Info (No Tokens)
+
+When an unauthenticated user or user with no tokens views the payment page, the app shows contract details for direct interaction:
+
+```
+┌─────────────────────────────────────────┐
+│  PAY WITH EXTERNAL WALLET               │
+│                                         │
+│  Owner    0x21a8...Db6C                 │
+│  Project  602                           │
+│  Chain    8453                          │
+│  Router   0xABC1...DEF2                 │
+│                                         │
+│  Call CocoPayRouter.payProject()        │
+│  with USDC, or send store tokens       │
+│  directly to the owner address.         │
+└─────────────────────────────────────────┘
+```
+
+This enables:
+- External wallets to call `CocoPayRouter.payProject()` via Etherscan/MetaMask
+- Manual token transfers to the store owner
+- Integrations with other payment UIs that read project metadata
+
+---
+
 ### Payment Success (Web)
 
 ```
