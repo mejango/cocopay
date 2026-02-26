@@ -60,6 +60,7 @@ yarn-error.*
 *.key
 credentials.yml.enc
 master.key
+apps/mobile/google-play-service-account.json
 
 # Docker
 .docker/

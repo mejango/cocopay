@@ -109,6 +109,12 @@ function ThemedStack() {
             presentation: 'modal',
           }}
         />
+        <Stack.Screen
+          name="store-img"
+          options={{
+            presentation: 'modal',
+          }}
+        />
 
       </Stack>
       <AuthPopover />

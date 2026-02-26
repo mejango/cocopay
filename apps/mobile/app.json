@@ -2,6 +2,7 @@
   "expo": {
     "name": "CocoPay",
     "slug": "cocopay",
+    "owner": "me.jango",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,14 +16,37 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.cocopay.mobile"
+      "bundleIdentifier": "app.cocopay.mobile",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Allow CocoPay to use Face ID for authentication.",
+        "NSPhotoLibraryUsageDescription": "Allow CocoPay to access your photos for profile pictures.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
+      },
+      "associatedDomains": ["applinks:cocopay.biz"]
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#10B981"
       },
-      "package": "app.cocopay.mobile"
+      "package": "app.cocopay.mobile",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "INTERNET",
+        "VIBRATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -41,6 +65,13 @@
         "expo-local-authentication",
         {
           "faceIDPermission": "Allow CocoPay to use Face ID for authentication."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow CocoPay to access your photos for profile pictures.",
+          "cameraPermission": "Allow CocoPay to access your camera to take photos."
         }
       ],
       "expo-asset",
