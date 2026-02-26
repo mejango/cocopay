@@ -103,6 +103,12 @@ function ThemedStack() {
             presentation: 'modal',
           }}
         />
+        <Stack.Screen
+          name="privacy"
+          options={{
+            presentation: 'modal',
+          }}
+        />
 
       </Stack>
       <AuthPopover />
