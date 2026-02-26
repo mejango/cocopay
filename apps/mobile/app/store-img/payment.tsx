@@ -1,22 +1,29 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, ImageSourcePropType } from 'react-native';
 import { useMemo } from 'react';
 import { spacing, typography, useTheme } from '../../src/theme';
 import type { BrandTheme } from '../../src/theme';
 import { PageContainer } from '../../src/components/PageContainer';
 
+const LOGOS = {
+  cafe: require('../../assets/store-img/cafe.png'),
+  mercado: require('../../assets/store-img/mercado.png'),
+  acai: require('../../assets/store-img/acai.png'),
+  restaurant: require('../../assets/store-img/restaurant.png'),
+};
+
 interface MockToken {
   symbol: string;
   name: string;
   balance: number;
-  initial: string;
+  logo: ImageSourcePropType;
   selected: boolean;
   amount: string;
 }
 
 const MOCK_TOKENS: MockToken[] = [
-  { symbol: 'CAFE', name: 'Café do Campeche', balance: 892, initial: 'C', selected: true, amount: '45.90' },
-  { symbol: 'MRT', name: 'Mercado Rio Tavares', balance: 634, initial: 'M', selected: false, amount: '0.00' },
-  { symbol: 'ACAI', name: 'Açaí da Praia', balance: 421, initial: 'A', selected: false, amount: '0.00' },
+  { symbol: 'CAFE', name: 'Café do Campeche', balance: 892, logo: LOGOS.cafe, selected: true, amount: '45.90' },
+  { symbol: 'MRT', name: 'Mercado Rio Tavares', balance: 634, logo: LOGOS.mercado, selected: false, amount: '0.00' },
+  { symbol: 'ACAI', name: 'Açaí da Praia', balance: 421, logo: LOGOS.acai, selected: false, amount: '0.00' },
 ];
 
 export default function MockPayment() {
@@ -29,6 +36,7 @@ export default function MockPayment() {
         <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContentContainer}>
           {/* Centered Amount Input */}
           <View style={styles.amountSection}>
+            <Image source={LOGOS.restaurant} style={styles.storeLogo} />
             <Text style={styles.storeName}>RESTAURANTE RIOZINHO</Text>
             <Text style={styles.amountInput}>$45.90</Text>
           </View>
@@ -48,9 +56,7 @@ export default function MockPayment() {
                   token.selected && styles.tokenRowSelected,
                 ]}
               >
-                <View style={styles.tokenLogoPlaceholder}>
-                  <Text style={styles.tokenLogoInitial}>{token.initial}</Text>
-                </View>
+                <Image source={token.logo} style={styles.tokenLogo} />
                 <View style={styles.tokenInfo}>
                   <Text style={[styles.tokenShort, token.selected && styles.tokenShortSelected]}>
                     {token.symbol}
@@ -163,20 +169,17 @@ function useStyles(t: BrandTheme) {
       borderColor: t.colors.accentSecondary,
       backgroundColor: `${t.colors.accentSecondary}1A`,
     },
-    tokenLogoPlaceholder: {
+    storeLogo: {
+      width: 96,
+      height: 96,
+      borderRadius: t.borderRadius.md,
+      marginBottom: spacing[6],
+    },
+    tokenLogo: {
       width: 32,
       height: 32,
       marginRight: spacing[2],
-      backgroundColor: t.colors.border,
-      justifyContent: 'center',
-      alignItems: 'center',
       borderRadius: t.borderRadius.sm,
-    },
-    tokenLogoInitial: {
-      fontFamily: t.typography.fontFamily,
-      fontSize: t.typography.sizes.sm,
-      fontWeight: t.typography.weights.bold,
-      color: t.colors.textSecondary,
     },
     tokenInfo: {
       flex: 1,

@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { spacing, typography, useTheme } from '../../src/theme';
 import type { BrandTheme } from '../../src/theme';
 import { PageContainer } from '../../src/components/PageContainer';
+
+const cafeLogo = require('../../assets/store-img/cafe.png');
 
 export default function MockCharge() {
   const theme = useTheme();
@@ -15,6 +17,7 @@ export default function MockCharge() {
     <PageContainer>
       <View style={styles.container}>
         <View style={styles.content}>
+          <Image source={cafeLogo} style={styles.storeLogo} />
           <Text style={styles.storeNameHeader}>CAFÉ DO CAMPECHE</Text>
           <Text style={styles.amountHeader}>$8,50</Text>
 
@@ -56,6 +59,12 @@ function useStyles(t: BrandTheme) {
       paddingHorizontal: spacing[4],
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    storeLogo: {
+      width: 96,
+      height: 96,
+      borderRadius: t.borderRadius.md,
+      marginBottom: spacing[6],
     },
     storeNameHeader: {
       fontFamily: t.typography.fontFamily,

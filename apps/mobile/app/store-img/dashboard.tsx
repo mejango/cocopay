@@ -1,23 +1,33 @@
-import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, ImageSourcePropType } from 'react-native';
 import { useMemo } from 'react';
 import { spacing, useTheme } from '../../src/theme';
 import type { BrandTheme } from '../../src/theme';
 import { PageContainer } from '../../src/components/PageContainer';
 
+// Static logo assets
+const LOGOS = {
+  usdc: require('../../assets/store-img/usdc.png'),
+  cafe: require('../../assets/store-img/cafe.png'),
+  mercado: require('../../assets/store-img/mercado.png'),
+  acai: require('../../assets/store-img/acai.png'),
+  padaria: require('../../assets/store-img/padaria.png'),
+  bike: require('../../assets/store-img/bike.png'),
+};
+
 interface MockStore {
   name: string;
   symbol: string;
   cashOutValueUsd: number;
-  initial: string;
+  logo: ImageSourcePropType;
 }
 
 const MOCK_STORES: MockStore[] = [
-  { name: 'Dólares Digitais', symbol: 'USDC', cashOutValueUsd: 500, initial: 'U' },
-  { name: 'Café do Campeche', symbol: 'CAFE', cashOutValueUsd: 892, initial: 'C' },
-  { name: 'Mercado Rio Tavares', symbol: 'MRT', cashOutValueUsd: 634, initial: 'M' },
-  { name: 'Açaí da Praia', symbol: 'ACAI', cashOutValueUsd: 421, initial: 'A' },
-  { name: 'Padaria Açoriana', symbol: 'PAD', cashOutValueUsd: 287, initial: 'P' },
-  { name: 'Bicicletaria Campeche', symbol: 'BIKE', cashOutValueUsd: 113, initial: 'B' },
+  { name: 'Dólares Digitais', symbol: 'USDC', cashOutValueUsd: 500, logo: LOGOS.usdc },
+  { name: 'Café do Campeche', symbol: 'CAFE', cashOutValueUsd: 892, logo: LOGOS.cafe },
+  { name: 'Mercado Rio Tavares', symbol: 'MRT', cashOutValueUsd: 634, logo: LOGOS.mercado },
+  { name: 'Açaí da Praia', symbol: 'ACAI', cashOutValueUsd: 421, logo: LOGOS.acai },
+  { name: 'Padaria Açoriana', symbol: 'PAD', cashOutValueUsd: 287, logo: LOGOS.padaria },
+  { name: 'Bicicletaria Campeche', symbol: 'BIKE', cashOutValueUsd: 113, logo: LOGOS.bike },
 ];
 
 function formatUsd(value: number): string {
@@ -52,9 +62,7 @@ export default function MockDashboard() {
             const hasValue = item.cashOutValueUsd > 0;
             return (
               <View style={styles.storeRow}>
-                <View style={styles.storeLogoPlaceholder}>
-                  <Text style={styles.logoInitial}>{item.initial}</Text>
-                </View>
+                <Image source={item.logo} style={styles.storeLogo} />
                 <View style={styles.nameColumn}>
                   <Text style={[styles.cashOutValue, hasValue && styles.cashOutValueActive]}>
                     {formatUsd(item.cashOutValueUsd)}
@@ -140,20 +148,12 @@ function useStyles(t: BrandTheme) {
       borderBottomWidth: 1,
       borderBottomColor: t.colors.border,
     },
-    storeLogoPlaceholder: {
+    storeLogo: {
       width: 48,
       height: 48,
       borderRadius: t.borderRadius.sm,
       marginRight: spacing[4],
-      backgroundColor: t.colors.border,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    logoInitial: {
-      fontFamily: t.typography.fontFamily,
-      fontSize: t.typography.sizes.lg,
-      fontWeight: t.typography.weights.bold,
-      color: t.colors.textSecondary,
+      backgroundColor: t.colors.backgroundSecondary,
     },
     nameColumn: {
       flex: 1,

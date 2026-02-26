@@ -1,8 +1,10 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { useMemo } from 'react';
 import { spacing, typography, useTheme } from '../../src/theme';
 import type { BrandTheme } from '../../src/theme';
 import { PageContainer } from '../../src/components/PageContainer';
+
+const cafeLogo = require('../../assets/store-img/cafe.png');
 
 // Mock bar graph data — realistic growth curves
 const VOLUME_DATA = [12, 18, 25, 31, 22, 38, 45, 52, 41, 58];
@@ -52,9 +54,7 @@ export default function MockStoreDetail() {
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
           {/* Header */}
           <View style={styles.headerRow}>
-            <View style={styles.headerLogoPlaceholder}>
-              <Text style={styles.headerLogoInitial}>C</Text>
-            </View>
+            <Image source={cafeLogo} style={styles.headerLogo} />
             <View style={styles.headerTextColumn}>
               <Text style={styles.headerName}>Café do Campeche</Text>
               <Text style={styles.headerToken}>CAFE</Text>
@@ -182,20 +182,12 @@ function useStyles(t: BrandTheme) {
       borderBottomWidth: 1,
       borderBottomColor: t.colors.border,
     },
-    headerLogoPlaceholder: {
+    headerLogo: {
       width: 40,
       height: 40,
       borderRadius: t.borderRadius.sm,
       marginRight: spacing[3],
-      backgroundColor: t.colors.border,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    headerLogoInitial: {
-      fontFamily: t.typography.fontFamily,
-      fontSize: t.typography.sizes.lg,
-      fontWeight: t.typography.weights.bold,
-      color: t.colors.textSecondary,
+      backgroundColor: t.colors.backgroundSecondary,
     },
     headerTextColumn: {
       flex: 1,
