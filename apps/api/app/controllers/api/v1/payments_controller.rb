@@ -58,6 +58,19 @@ module Api
       end
 
       def execute
+        # Idempotency: if client sends an idempotency_key and a transaction already
+        # exists with that key, return the existing transaction instead of creating a duplicate.
+        if params[:idempotency_key].present?
+          existing = Transaction.find_by(idempotency_key: params[:idempotency_key])
+          if existing
+            return render_success({
+              id: existing.id,
+              status: existing.status,
+              confirmation_code: existing.confirmation_code
+            }, status: :ok)
+          end
+        end
+
         store = Store.find(params[:store_id])
         amount_usd = params[:amount_usd].to_d
         chain_id = params[:chain_id].to_i
@@ -69,7 +82,7 @@ module Api
           amount_usd: amount_usd,
           chain_id: chain_id,
           tokens_used: params[:tokens_used]&.map(&:to_unsafe_h),
-          idempotency_key: SecureRandom.uuid
+          idempotency_key: params[:idempotency_key] || SecureRandom.uuid
         )
 
         signed_requests = params[:signed_forward_requests]&.map(&:to_unsafe_h)

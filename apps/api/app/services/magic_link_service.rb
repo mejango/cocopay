@@ -2,6 +2,7 @@
 
 class MagicLinkService
   EXPIRY_SECONDS = ENV.fetch("OTP_EXPIRY_SECONDS", 300).to_i
+  MAX_ATTEMPTS = 5
 
   class << self
     def generate(user)
@@ -25,18 +26,39 @@ class MagicLinkService
       }
     end
 
+    # Returns:
+    #   { user: User }  on success
+    #   :too_many_attempts  when locked out
+    #   nil  on wrong code or expired
     def verify(verification_id, token)
       data = redis.get(redis_key(verification_id))
       return nil unless data
 
+      # Check if already locked out
+      attempts = redis.get(attempts_key(verification_id)).to_i
+      return :too_many_attempts if attempts >= MAX_ATTEMPTS
+
       parsed = JSON.parse(data, symbolize_names: true)
-      return nil unless Digest::SHA256.hexdigest(token) == parsed[:token_hash]
+
+      unless Digest::SHA256.hexdigest(token) == parsed[:token_hash]
+        # Track the failed attempt
+        new_count = redis.incr(attempts_key(verification_id))
+        redis.expire(attempts_key(verification_id), EXPIRY_SECONDS)
+
+        if new_count >= MAX_ATTEMPTS
+          # Lock out: delete the OTP so it can't be used even if guessed later
+          redis.del(redis_key(verification_id))
+          return :too_many_attempts
+        end
+
+        return nil
+      end
 
       user = User.find_by(id: parsed[:user_id])
       return nil unless user
 
-      # Delete after successful verification
-      redis.del(redis_key(verification_id))
+      # Delete OTP and attempts after successful verification
+      redis.del(redis_key(verification_id), attempts_key(verification_id))
 
       { user: user }
     end
@@ -49,6 +71,10 @@ class MagicLinkService
 
     def redis_key(verification_id)
       "magic_link:#{verification_id}"
+    end
+
+    def attempts_key(verification_id)
+      "magic_link_attempts:#{verification_id}"
     end
   end
 end

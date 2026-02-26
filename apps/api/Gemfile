@@ -35,6 +35,9 @@ gem "jbuilder", "~> 2.11"
 # CORS
 gem "rack-cors", "~> 2.0"
 
+# Rate limiting
+gem "rack-attack", "~> 6.7"
+
 # Boot speed
 gem "bootsnap", require: false
 

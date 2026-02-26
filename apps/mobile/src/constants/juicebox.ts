@@ -4,6 +4,9 @@ export const JB_MULTI_TERMINAL = '0x2db6d704058e552defe415753465df8df0361846' as
 export const JB_TOKENS = '0x4d0edd347fb1fa21589c1e109b3474924be87636' as const;
 export const NATIVE_TOKEN = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' as const;
 
+// REVLoans (CREATE2, same on all chains)
+export const REV_LOANS_ADDRESS = '0x1880d832aa283d05b8eab68877717e25fbd550bb' as const;
+
 // USDC addresses per chain (decimals = 6)
 export const USDC_ADDRESSES: Record<number, string> = {
   // Mainnets

@@ -27,10 +27,23 @@ Rails.application.routes.draw do
       resources :payments, only: [:create, :show] do
         collection do
           post :preview
+          post :execute
         end
         member do
           get :status
         end
+      end
+
+      # Cash Outs (REVLoans borrow)
+      resources :cash_outs, only: [] do
+        collection { post :execute }
+        member { get :status }
+      end
+
+      # Withdrawals (USDC transfer out)
+      resources :withdrawals, only: [] do
+        collection { post :execute }
+        member { get :status }
       end
 
       # Deployments (Relayr proxy)

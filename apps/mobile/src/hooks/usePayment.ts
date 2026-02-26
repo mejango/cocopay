@@ -287,6 +287,9 @@ export function usePayment(): UsePaymentReturn {
         }
       }
 
+      // Generate idempotency key to prevent duplicate payments on retry
+      const idempotencyKey = `${storeId}-${amountUsd}-${chainId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
       // Submit to backend
       const result = await paymentsApi.execute({
         store_id: storeId,
@@ -295,6 +298,7 @@ export function usePayment(): UsePaymentReturn {
         tokens_used: tokensUsed,
         transactions,
         signed_forward_requests: signedForwardRequests,
+        idempotency_key: idempotencyKey,
       });
 
       if (!mountedRef.current) return;

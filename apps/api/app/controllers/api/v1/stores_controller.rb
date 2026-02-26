@@ -103,11 +103,20 @@ module Api
           category: store.category,
           description: store.description,
           location: location_info(store),
+          owner_address: store.owner&.deposit_address,
           revnet: deployment ? {
             project_id: deployment.project_id,
             token_address: deployment.token_address,
             terminal_address: deployment.terminal_address
           } : nil,
+          deployments: store.store_deployments.deployed.map { |d|
+            {
+              chain_id: d.chain_id,
+              project_id: d.project_id,
+              token_address: d.token_address,
+              terminal_address: d.terminal_address
+            }
+          },
           deployment_status: store.deployment_status,
           qr_code_url: "https://pay.cocopay.app/#{store.short_code || store.id}",
           website: store.website,

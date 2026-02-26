@@ -1,10 +1,12 @@
-import { View, Text, StyleSheet, Pressable, TextInput, Alert, Platform, useWindowDimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Alert, Platform, useWindowDimensions, Image, ActivityIndicator } from 'react-native';
 import { useState, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useBalanceStore } from '../src/stores/balance';
 import { useAuthStore } from '../src/stores/auth';
 import { useAuthPopoverStore } from '../src/stores/authPopover';
+import { useWithdraw } from '../src/hooks/useWithdraw';
+import { USDC_DECIMALS } from '../src/constants/juicebox';
 import { spacing, typography, useTheme } from '../src/theme';
 import type { BrandTheme } from '../src/theme';
 import { PageContainer } from '../src/components/PageContainer';
@@ -26,8 +28,12 @@ export default function WalletScreen() {
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [amount, setAmount] = useState('');
   const [withdrawAddress, setWithdrawAddress] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { status: withdrawStatus, confirmationCode, txHash, error: withdrawError, withdraw, reset: resetWithdraw } = useWithdraw();
+
+  const isLoading = withdrawStatus === 'building' || withdrawStatus === 'submitting' || withdrawStatus === 'processing';
+  const isCompleted = withdrawStatus === 'completed';
+  const isFailed = withdrawStatus === 'failed';
 
   const handleBack = () => {
     router.back();
@@ -64,15 +70,17 @@ export default function WalletScreen() {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      Alert.alert(
-        t('wallet.comingSoonTitle'),
-        t('wallet.comingSoonWithdraw')
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    const amountRaw = BigInt(Math.floor(withdrawAmount * 10 ** USDC_DECIMALS));
+
+    // Default to Base (8453) for withdrawals — could be made selectable later
+    const chainId = 8453;
+
+    await withdraw({
+      chainId,
+      destinationAddress: withdrawAddress,
+      amountUsd: withdrawAmount,
+      amountRaw,
+    });
   };
 
   // Color-code every 6 characters of the address for readability
@@ -169,10 +177,38 @@ export default function WalletScreen() {
                 </Text>
               </View>
             )
+          ) : isCompleted ? (
+            /* Withdraw: success confirmation */
+            <View style={styles.withdrawSection}>
+              <Text style={styles.successText}>{t('wallet.withdrawSuccess')}</Text>
+              {txHash && (
+                <Text style={styles.txHashText}>{txHash.slice(0, 10)}...{txHash.slice(-8)}</Text>
+              )}
+              {confirmationCode && (
+                <Text style={styles.confirmationCodeText}>{confirmationCode}</Text>
+              )}
+              <Pressable
+                style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
+                onPress={() => { resetWithdraw(); setAmount(''); setWithdrawAddress(''); }}
+              >
+                <Text style={styles.actionButtonText}>{t('common.done')}</Text>
+              </Pressable>
+            </View>
+          ) : isFailed ? (
+            /* Withdraw: error state */
+            <View style={styles.withdrawSection}>
+              <Text style={styles.errorText}>{withdrawError || t('wallet.withdrawFailed')}</Text>
+              <Pressable
+                style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
+                onPress={resetWithdraw}
+              >
+                <Text style={styles.actionButtonText}>{t('common.retry')}</Text>
+              </Pressable>
+            </View>
           ) : (
             /* Withdraw: amount input + address */
             <View style={styles.withdrawSection}>
-              <Text style={styles.availableLabel}>$0.00 {t('wallet.available')}</Text>
+              <Text style={styles.availableLabel}>${totalUsd || '0.00'} {t('wallet.available')}</Text>
               <View style={styles.amountWrapper}>
                 <TextInput
                   style={[
@@ -227,7 +263,7 @@ export default function WalletScreen() {
 
           <View style={styles.dockSpacer} />
 
-          {activeTab === 'withdraw' && (
+          {activeTab === 'withdraw' && !isCompleted && !isFailed && (
             <Pressable
               style={({ pressed }) => [
                 styles.actionButton,
@@ -237,9 +273,13 @@ export default function WalletScreen() {
               onPress={handleWithdraw}
               disabled={isLoading}
             >
-              <Text style={styles.actionButtonText}>
-                {isLoading ? t('wallet.processing') : t('wallet.withdraw')}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator color={theme.colors.accentText} size="small" />
+              ) : (
+                <Text style={styles.actionButtonText}>
+                  {t('wallet.withdraw')}
+                </Text>
+              )}
             </Pressable>
           )}
         </View>
@@ -443,6 +483,35 @@ function useStyles(t: BrandTheme) {
       fontSize: t.typography.sizes.sm,
       color: t.colors.text,
     } as any,
+    successText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+      marginBottom: spacing[3],
+      textAlign: 'center',
+    },
+    txHashText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: t.colors.textMuted,
+      marginBottom: spacing[2],
+    },
+    confirmationCodeText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xl,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.accent,
+      letterSpacing: 2,
+      marginBottom: spacing[4],
+    },
+    errorText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: '#ef4444',
+      textAlign: 'center',
+      marginBottom: spacing[4],
+    },
     // Bottom dock
     bottomContainer: {
       flexDirection: 'row',

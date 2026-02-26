@@ -68,7 +68,7 @@ module Api
 
         user = result[:user]
         user.update!(email_verified_at: Time.current) unless user.email_verified_at
-        SmartAccountProvisionService.ensure_smart_account(user)
+        provision_smart_account(user)
 
         session = create_session(user, auth_method: "email")
         jwt = JwtService.encode({ user_id: user.id, session_id: session.id })
@@ -121,7 +121,7 @@ module Api
 
         verified_address = result[:address]
         user = User.find_or_create_by!(wallet_address: verified_address)
-        SmartAccountProvisionService.ensure_smart_account(user)
+        provision_smart_account(user)
 
         session = create_session(user, auth_method: "wallet")
         jwt = JwtService.encode({ user_id: user.id, session_id: session.id })
@@ -165,6 +165,12 @@ module Api
           platform: request.headers["X-Platform"],
           app_version: request.headers["X-App-Version"]
         }.compact
+      end
+
+      def provision_smart_account(user)
+        SmartAccountProvisionService.ensure_smart_account(user)
+      rescue StandardError => e
+        Rails.logger.error "Smart account provisioning failed for user #{user.id}: #{e.message}"
       end
 
       def serialize_user(user)

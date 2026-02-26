@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useCashOutPopoverStore } from '../stores/cashOutPopover';
 import { useBalanceStore } from '../stores/balance';
 import { useRequireAuth } from '../hooks/useRequireAuth';
-import { buildCashOutTransaction, formatTransactionForDisplay } from '../services/terminal';
+import { useCashOut, useBorrowableAmount } from '../hooks/useCashOut';
+import { USDC_DECIMALS } from '../constants/juicebox';
 import { spacing, useTheme } from '../theme';
 import type { BrandTheme } from '../theme';
 
@@ -33,7 +34,7 @@ export function CashOutPopover() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const [amount, setAmount] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { status: cashOutStatus, confirmationCode, txHash, error: cashOutError, cashOut, reset: resetCashOut } = useCashOut();
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   useEffect(() => {
@@ -44,22 +45,34 @@ export function CashOutPopover() {
     return () => { showSub.remove(); hideSub.remove(); };
   }, []);
 
-  // Reset amount when popover opens
+  // Reset amount and cash-out state when popover opens
   useEffect(() => {
     if (isOpen && params) {
       setAmount(params.balance || '0');
+      resetCashOut();
     }
-  }, [isOpen, params]);
+  }, [isOpen, params, resetCashOut]);
 
   const maxAmount = parseFloat(params?.balance || '0');
   const tokenSymbol = params?.tokenSymbol || 'TOKEN';
-  const cashOutValueUsd = parseFloat(params?.cashOutValueUsd || '0');
+  const chainId = parseInt(params?.chainId || '1', 10);
+  const projectId = parseInt(params?.projectId || '0', 10);
 
-  // Compute proportional USD value based on entered amount
+  // Convert entered amount to raw token amount (18 decimals)
   const enteredAmount = parseFloat(amount) || 0;
-  const usdPreview = maxAmount > 0
-    ? ((enteredAmount / maxAmount) * cashOutValueUsd).toFixed(2)
-    : '0.00';
+  const collateral = BigInt(Math.floor(enteredAmount * 1e18));
+
+  // Query on-chain borrowable USDC for this collateral amount
+  const { borrowableAmount, loading: borrowableLoading } = useBorrowableAmount(chainId, projectId, collateral);
+
+  // Show borrowable USDC in human-readable format
+  const usdPreview = borrowableAmount !== null
+    ? (Number(borrowableAmount) / 10 ** USDC_DECIMALS).toFixed(2)
+    : '...';
+
+  const isLoading = cashOutStatus === 'building' || cashOutStatus === 'submitting' || cashOutStatus === 'processing';
+  const isCompleted = cashOutStatus === 'completed';
+  const isFailed = cashOutStatus === 'failed';
 
   const handleMax = () => {
     setAmount(params?.balance || '0');
@@ -82,33 +95,19 @@ export function CashOutPopover() {
       showAlert(t('cashOut.errorTitle'), t('cashOut.errorMaxAmount', { amount: maxAmount.toFixed(2), symbol: tokenSymbol }));
       return;
     }
-
-    setIsLoading(true);
-    try {
-      const chainId = parseInt(params.chainId || '1', 10);
-      const projectId = parseInt(params.projectId || '0', 10);
-      const cashOutWei = BigInt(Math.floor(cashOutAmount * 1e18));
-
-      const tx = buildCashOutTransaction(
-        {
-          holder: walletAddress,
-          projectId,
-          cashOutCount: cashOutWei,
-          beneficiary: walletAddress,
-          minTokensReclaimed: BigInt(0),
-        },
-        chainId
-      );
-
-      const txDisplay = formatTransactionForDisplay(tx);
-      showAlert(
-        t('cashOut.txPreparedTitle'),
-        t('cashOut.txPreparedMessage', { symbol: tokenSymbol, details: txDisplay }),
-        [{ text: 'OK', onPress: () => close() }]
-      );
-    } finally {
-      setIsLoading(false);
+    if (!borrowableAmount || borrowableAmount === 0n) {
+      showAlert(t('cashOut.errorTitle'), t('cashOut.errorNoBorrowable'));
+      return;
     }
+
+    await cashOut({
+      chainId,
+      projectId,
+      collateral,
+      minBorrowAmount: borrowableAmount,
+      amountUsd: Number(usdPreview),
+      beneficiary: walletAddress,
+    });
   };
 
   const isMobile = screenWidth < 600;
@@ -191,27 +190,48 @@ export function CashOutPopover() {
           </Pressable>
         </View>
 
-        {/* USD preview */}
+        {/* USD preview (from on-chain borrowable query) */}
         <Text style={styles.usdPreview}>
-          {t('cashOutPopover.usdValue', { value: usdPreview })}
+          {borrowableLoading
+            ? t('cashOutPopover.usdValue', { value: '...' })
+            : t('cashOutPopover.usdValue', { value: usdPreview })}
         </Text>
 
-        {/* Cash Out button */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.cashOutButton,
-            pressed && styles.buttonPressed,
-            isLoading && styles.buttonDisabled,
-          ]}
-          onPress={handleCashOut}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color={theme.colors.accentText} size="small" />
-          ) : (
-            <Text style={styles.cashOutButtonText}>{t('store.cashOut')}</Text>
-          )}
-        </Pressable>
+        {/* Status overlay */}
+        {isCompleted ? (
+          <View style={styles.statusContainer}>
+            <Text style={styles.statusText}>{t('cashOut.completed')}</Text>
+            {txHash && <Text style={styles.txHash}>{txHash.slice(0, 10)}...{txHash.slice(-8)}</Text>}
+            {confirmationCode && <Text style={styles.confirmationCode}>{confirmationCode}</Text>}
+            <Pressable style={styles.cashOutButton} onPress={close}>
+              <Text style={styles.cashOutButtonText}>{t('common.done')}</Text>
+            </Pressable>
+          </View>
+        ) : isFailed ? (
+          <View style={styles.statusContainer}>
+            <Text style={styles.errorText}>{cashOutError || t('cashOut.failed')}</Text>
+            <Pressable style={styles.cashOutButton} onPress={resetCashOut}>
+              <Text style={styles.cashOutButtonText}>{t('common.retry')}</Text>
+            </Pressable>
+          </View>
+        ) : (
+          /* Cash Out button */
+          <Pressable
+            style={({ pressed }) => [
+              styles.cashOutButton,
+              pressed && styles.buttonPressed,
+              isLoading && styles.buttonDisabled,
+            ]}
+            onPress={handleCashOut}
+            disabled={isLoading || borrowableLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={theme.colors.accentText} size="small" />
+            ) : (
+              <Text style={styles.cashOutButtonText}>{t('store.cashOut')}</Text>
+            )}
+          </Pressable>
+        )}
       </View>
     </>
   );
@@ -332,6 +352,35 @@ function useStyles(t: BrandTheme) {
       fontSize: t.typography.sizes.sm,
       fontWeight: t.typography.weights.bold,
       color: t.colors.accentText,
+    },
+    statusContainer: {
+      alignItems: 'center',
+      gap: spacing[2],
+    },
+    statusText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.text,
+    },
+    txHash: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.xs,
+      color: t.colors.textMuted,
+    },
+    confirmationCode: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.lg,
+      fontWeight: t.typography.weights.bold,
+      color: t.colors.accent,
+      letterSpacing: 2,
+    },
+    errorText: {
+      fontFamily: t.typography.fontFamily,
+      fontSize: t.typography.sizes.sm,
+      color: '#ef4444',
+      textAlign: 'center',
+      marginBottom: spacing[2],
     },
     buttonPressed: {
       opacity: 0.7,

@@ -6,14 +6,12 @@ class Loan < ApplicationRecord
 
   # Validations
   validates :chain_id, presence: true
-  validates :loan_id_onchain, presence: true
   validates :collateral, presence: true, numericality: { greater_than: 0 }
   validates :borrow_amount, presence: true, numericality: { greater_than: 0 }
   validates :prepaid_fee_percent, presence: true
   validates :prepaid_duration_seconds, presence: true
   validates :project_id, presence: true
   validates :token_address, presence: true
-  validates :origination_tx_hash, presence: true
 
   # Scopes
   scope :active, -> { where(is_active: true) }

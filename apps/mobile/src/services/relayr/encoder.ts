@@ -4,7 +4,7 @@
  */
 
 import { encodeFunctionData, type Address, type Hex, keccak256, toBytes } from 'viem';
-import { JB_MULTI_TERMINAL } from '../../constants/juicebox';
+import { JB_MULTI_TERMINAL, USDC_ADDRESSES as SHARED_USDC_ADDRESSES, USDC_DECIMALS } from '../../constants/juicebox';
 
 // Contract addresses (same on all chains via CREATE2)
 const REV_DEPLOYER_ADDRESS = '0x2ca27bde7e7d33e353b44c27acfcf6c78dde251d' as const;
@@ -42,21 +42,8 @@ const JB_PRICES = '0x9b90e507cf6b7eb681a506b111f6f50245e614c4' as const;
 // USD currency ID (baseCurrency)
 const USD_CURRENCY = 2;
 
-// USDC addresses per chain (decimals = 6)
-const USDC_ADDRESSES: Record<number, Address> = {
-  // Mainnets
-  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  10: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
-  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-  // Testnets
-  11155111: '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238',
-  11155420: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',
-  84532: '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
-  421614: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
-};
-
-const USDC_DECIMALS = 6;
+// Cast shared USDC addresses to viem Address type
+const USDC_ADDRESSES = SHARED_USDC_ADDRESSES as Record<number, Address>;
 
 /**
  * Derive currency uint32 from a token address: uint32(uint160(address))

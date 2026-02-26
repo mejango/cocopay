@@ -185,6 +185,44 @@ export function buildCashOutTransaction(
   };
 }
 
+// Build ERC-20 approve transaction
+export function buildApproveTransaction(
+  tokenAddress: string,
+  spender: string,
+  amount: bigint,
+  chainId: number
+): TransactionData {
+  // approve(address,uint256) selector: 0x095ea7b3
+  const selector = '0x095ea7b3';
+  const spenderHex = spender.slice(2).toLowerCase().padStart(64, '0');
+  const amountHex = amount.toString(16).padStart(64, '0');
+
+  return {
+    to: tokenAddress,
+    data: selector + spenderHex + amountHex,
+    chainId,
+  };
+}
+
+// Build ERC-20 transfer transaction
+export function buildTokenTransferTransaction(
+  tokenAddress: string,
+  to: string,
+  amount: bigint,
+  chainId: number
+): TransactionData {
+  // transfer(address,uint256) selector: 0xa9059cbb
+  const selector = '0xa9059cbb';
+  const toHex = to.slice(2).toLowerCase().padStart(64, '0');
+  const amountHex = amount.toString(16).padStart(64, '0');
+
+  return {
+    to: tokenAddress,
+    data: selector + toHex + amountHex,
+    chainId,
+  };
+}
+
 // Format transaction for display
 export function formatTransactionForDisplay(tx: TransactionData): string {
   const chain = getChainById(tx.chainId);

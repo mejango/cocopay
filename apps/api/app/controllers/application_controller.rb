@@ -59,6 +59,10 @@ class ApplicationController < ActionController::API
     decoded = JwtService.decode(token)
     return nil unless decoded
 
+    # Verify the session is still active (not revoked or expired)
+    session = Session.find_by(id: decoded["session_id"])
+    return nil unless session&.active?
+
     User.find_by(id: decoded["user_id"])
   rescue JWT::DecodeError, JWT::ExpiredSignature
     nil

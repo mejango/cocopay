@@ -27,6 +27,7 @@ export interface ExecutePaymentRequest {
   tokens_used: TokenUsed[];
   transactions: PaymentTransaction[];
   signed_forward_requests?: SignedForwardRequest[];
+  idempotency_key?: string;
 }
 
 export interface ExecutePaymentResponse {

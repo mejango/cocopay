@@ -13,13 +13,22 @@ interface Store {
   user_rewards_usd: string;
 }
 
-interface StoreDetails extends Store {
+export interface StoreDeployment {
+  chain_id: number;
+  project_id: number;
+  token_address: string;
+  terminal_address: string;
+}
+
+export interface StoreDetails extends Store {
   description: string | null;
+  owner_address: string | null;
   revnet: {
     project_id: number;
     token_address: string;
     terminal_address: string;
   } | null;
+  deployments: StoreDeployment[];
   deployment_status: string;
   qr_code_url: string;
   website: string | null;
