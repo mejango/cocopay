@@ -5,6 +5,11 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { I18nextProvider } from 'react-i18next';
+import {
+  useFonts,
+  SpaceMono_400Regular,
+  SpaceMono_700Bold,
+} from '@expo-google-fonts/space-mono';
 import i18n from '../src/i18n';
 import { useAuthStore } from '../src/stores/auth';
 import { useBrandStore } from '../src/stores/brand';
@@ -125,6 +130,13 @@ function ThemedStack() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    SpaceMono_400Regular,
+    SpaceMono_700Bold,
+  });
+
+  if (!fontsLoaded) return null;
+
   return (
     <I18nextProvider i18n={i18n}>
     <WagmiProvider config={wagmiConfig}>

@@ -113,7 +113,7 @@ const juice: BrandTheme = {
     ...SHARED_SEMANTIC,
   },
   typography: {
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' })!,
+    fontFamily: 'SpaceMono_400Regular',
     sizes: SHARED_SIZES,
     weights: SHARED_WEIGHTS,
   },

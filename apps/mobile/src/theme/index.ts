@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 // Juicy Vision Color Palette
 export const colors = {
   // Brand colors
@@ -48,11 +46,7 @@ export const colors = {
 
 // Typography
 export const typography = {
-  fontFamily: Platform.select({
-    ios: 'Menlo',
-    android: 'monospace',
-    default: 'monospace',
-  }),
+  fontFamily: 'SpaceMono_400Regular',
 
   // Font sizes (matching Tailwind scale)
   sizes: {
