@@ -500,7 +500,7 @@ function useStyles(t: BrandTheme) {
       opacity: 0.9,
     },
     payButtonText: {
-      fontFamily: t.typography.fontFamily,
+      fontFamily: 'SpaceMono_700Bold',
       color: t.colors.accentText,
       fontSize: t.typography.sizes.xl,
       fontWeight: t.typography.weights.bold,
